@@ -1332,6 +1332,11 @@ myalpha[1:4] %>% pander()
 
 [Cameron, R. P., & Gusman, D. (2003). The primary care PTSD screen (PC-PTSD): development and operating characteristics. Primary care psychiatry, 9(1), 9-14.](https://depts.washington.edu/fammed/improvingopioidcare/wp-content/uploads/sites/12/2018/02/Prins-2003.pdf)
 
+```{r}
+table1(~ bl_ptsd1 + bl_ptsd2 + bl_ptsd3 + bl_ptsd4 + ptsdscore, 
+       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+```
+
 ## Resilience
 ```{r}
 resil <- DT_n[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT_n) %like% "pid|bl_resilience\\d+$"]
