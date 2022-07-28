@@ -718,6 +718,9 @@ table1::table1(~ bl_motivation1 + bl_motivation2 +
 [Hussen, S. A., Harper, G. W., Bauermeister, J. A., Hightow-Weidman, L. B., & Adolescent Medicine Trials Network for HIV/AIDS Interventions. (2015). Psychosocial influences on engagement in care among HIV-positive young black gay/bisexual and other men who have sex with men. AIDS patient care and STDs, 29(2), 77-85.](https://www.liebertpub.com/doi/full/10.1089/apc.2014.0117)
 
 ```{r}
+DT[is.na(bl_outcome11) & bl_outcome10 == "Very", bl_outcome11 := "Very"]
+DT[is.na(bl_outcome12) & bl_outcome11 == "Very", bl_outcome12 := "Very"]
+
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_outcome\\d"])
 ```
 
