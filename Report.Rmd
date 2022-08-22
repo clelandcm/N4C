@@ -5,8 +5,10 @@ date: '`r format(Sys.time(), "%B %d, %Y %r %Z")`'
 output:
   html_document:
     highlight: tango
-    theme: spacelab
+    theme: journal
     toc: yes
+    toc_float: 
+      collapsed: false
     toc_depth: 5
   word_document:
     toc: yes
