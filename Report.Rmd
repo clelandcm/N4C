@@ -1551,6 +1551,8 @@ label(EMA_eod$v1_ema4_q2___996) <- "What did you do today?: Other"
 table1(~ ., data = EMA_eod)
 ```
 
+<br>
+
 ```{r}
 n4c[is.na(v1_ema4_q9_v2) & v1_ema4_q9 == "10 - All of the prescribed doses", v1_ema4_q9_v2 := "All of my HIV medication doses"]
 n4c[is.na(v1_ema4_q9) & v1_ema4_q9_v2 == "All of my HIV medication doses", v1_ema4_q9 := "10 - All of the prescribed doses"]
@@ -1558,6 +1560,25 @@ n4c[is.na(v1_ema4_q9_v2) & v1_ema4_q9 %in% c("2","6"), v1_ema4_q9_v2 := "Some of
 label(n4c$v1_ema4_q9_v2) <- "How much of your HIV medication did you take today? (Version 2)"
 label(n4c$v1_ema4_q9) <- "How much of your HIV medication did you take today? (Version 1)"
 table1(~ v1_ema4_q9 + v1_ema4_q9_v2, data = n4c[!is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])
+```
+
+# Follow-Up
+## Nine Months
+```{r}
+DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU1_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 274, "FU1 Not Due Yet", "FU1 Due, 274+ Days Since Baseline")]
+DT[, FU1_Due := factor(FU1_Due, levels = c("FU1 Not Due Yet", "FU1 Due, 274+ Days Since Baseline"))]
+label(DT$FU1_Due) <- "First Follow-Up Due"
+
+table1(~ FU1_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+```
+
+## Eighteen Months
+```{r}
+DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU2_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 548, "FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline")]
+DT[, FU2_Due := factor(FU2_Due, levels = c("FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline"))]
+label(DT$FU2_Due) <- "Second Follow-Up Due"
+
+table1(~ FU2_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 # Withdrawals 
