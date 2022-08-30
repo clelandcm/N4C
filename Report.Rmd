@@ -740,7 +740,37 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Sherbourne, C. D., & Stewart, A. L. (1991). The MOS social support survey. Social science & medicine, 32(6), 705-714.](https://www.sciencedirect.com/science/article/abs/pii/027795369190150B)
 
 ```{r}
+socsup <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_mos\\d"]
+
+socsup_m <- melt(socsup, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
+
+socsup_m[, Response_n := car::recode(Response, "'None of the time'=0;
+                                                'A little of the time'=1;
+                                                'Some of the time'=2;
+                                                'Most of the time'=3;
+                                                'All of the time'=4;
+                                                 else=NA", as.factor = FALSE)]
+
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_mos\\d"])
+```
+
+<br>
+
+```{r}
+table1(~ `Social Support Total`, 
+       data = socsup_m[, .(`Social Support Total` = mean(Response_n, na.rm = TRUE)*9 / 36 * 100), 
+                       by = .(pid)])
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(socsup_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
 ```
 
 ## Everyday Discrimination
@@ -748,7 +778,38 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Williams, D. R., Yu, Y., Jackson, J. S., & Anderson, N. B. (1997). Racial differences in physical and mental health: Socio-economic status, stress and discrimination. Journal of health psychology, 2(3), 335-351.](https://journals.sagepub.com/doi/abs/10.1177/135910539700200305)
 
 ```{r}
+edd <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|discrim\\d+$"]
+
+edd_m <- melt(edd, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
+
+edd_m[, Response_n := car::recode(Response, "'Never'=1;
+                                                'Less than once a year'=2;
+                                                'A few times a year'=3;
+                                                'A few times a month'=4;
+                                                'At least once a week'=5;
+                                                'Almost everyday'=6;
+                                                 else=NA", as.factor = FALSE)]
+
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_discrim\\d+$"])
+```
+
+<br>
+
+```{r}
+table1(~ `Everyday Discrimination Total`, 
+       data = edd_m[, .(`Everyday Discrimination Total` = mean(Response_n, na.rm = TRUE)*9), 
+                       by = .(pid)])
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(edd_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
 ```
 
 ## HIV Stigma
@@ -756,7 +817,36 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Wright, K., Naar-King, S., Lam, P., Templin, T., & Frey, M. (2007). Stigma scale revised: reliability and validity of a brief measure of stigma for HIV+ youth. Journal of adolescent health, 40(1), 96-98.](https://www.sciencedirect.com/science/article/pii/S1054139X06003004)
 
 ```{r}
+stig <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_stigma\\d"]
+
+stig_m <- melt(stig, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
+
+stig_m[, Response_n := car::recode(Response, "'Strongly Disagree'=1;
+                                              'Disagree'=2;
+                                                'Agree'=3;
+                                                'Strongly Agree'=4;
+                                                 else=NA", as.factor = FALSE)]
+
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_stigma\\d"])
+```
+
+<br>
+
+```{r}
+table1(~ `HIV Stigma Total`, 
+       data = stig_m[, .(`HIV Stigma Total` = mean(Response_n, na.rm = TRUE)*10), 
+                       by = .(pid)])
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(stig_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
 ```
 
 ## Client Engagement in HIV Care
@@ -777,7 +867,46 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Anderson, L. A., & Dedrick, R. F. (1990). Development of the Trust in Physician scale: a measure to assess interpersonal trust in patient-physician relationships. Psychological reports, 67(3_suppl), 1091-1100.](https://journals.sagepub.com/doi/abs/10.2466/pr0.1990.67.3f.1091)
 
 ```{r}
+tprov <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_trust\\d"]
+
+tprov_m <- melt(tprov, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
+
+tprov_m[Item %in% c('bl_trust1','bl_trust5','bl_trust7','bl_trust11'), 
+         Response_n := car::recode(Response, "'Strongly Disagree'=4;
+                                              'Disagree'=3;
+                                              'Neutral'=2;
+                                              'Agree'=1;
+                                              'Strongly Agree'=0;
+                                               else=NA", as.factor = FALSE)]
+
+tprov_m[!(Item %in% c('bl_trust1','bl_trust5','bl_trust7','bl_trust11')), 
+         Response_n := car::recode(Response, "'Strongly Disagree'=0;
+                                              'Disagree'=1;
+                                              'Neutral'=2;
+                                              'Agree'=3;
+                                              'Strongly Agree'=4;
+                                               else=NA", as.factor = FALSE)]
+
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_trust\\d"])
+```
+
+<br>
+
+```{r}
+table1(~ `Trust in Provider Total (0-44)`, 
+       data = tprov_m[, .(`Trust in Provider Total (0-44)` = mean(Response_n, na.rm = TRUE)*11), 
+                       by = .(pid)])
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(tprov_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
 ```
 
 ## ART Outcome Expectancies
@@ -804,13 +933,21 @@ label(DT$bl_artoutcome1g) <- "How confident are you that HIV medication will pre
 erlen_oe <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(n4c) %like% "pid|artoutcome1"], id.vars = "pid")
 
-DT <- merge(DT, erlen_oe[, .(Outcome_Expectancy = mean(value, na.rm = TRUE)), by = .(pid)], by = "pid")
-            
-label(DT$Outcome_Expectancy) <- "Overall ART Outcome Expectancy (1-10)"
+label(erlen_oe$value) <- "Overall ART Outcome Expectancy (1-10)"
 
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .SD, .SDcols = names(DT) %like% "artoutcome1|Outcome_Expectancy"])
+                      .SD, .SDcols = names(DT) %like% "artoutcome1"])
 ```
+
+<br>
+
+```{r}
+table1(~ `Overall ART Outcome Expectancy (1-10)`, 
+       data = erlen_oe[, .(`Overall ART Outcome Expectancy (1-10)` = mean(value, na.rm = TRUE)), 
+                       by = .(pid)])
+```
+
+<br>
 
 Coefficient Alpha
 ```{r}
@@ -818,7 +955,7 @@ myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2
               .SD, .SDcols = names(n4c) %like% "artoutcome1"] %>%
   psych::alpha()
 
-myalpha[1:4] %>% pander()
+myalpha[1:3] %>% pander()
 ```
 
 ## ART Self-Efficacy
@@ -869,13 +1006,15 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
                       .SD, .SDcols = names(DT) %like% "bl_artadh\\d+$|HMed_Self_Efficacy"])
 ```
 
+<br>
+
 Coefficient Alpha
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
               .SD, .SDcols = names(n4c) %like% "bl_artadh\\d+$"] %>%
   psych::alpha()
 
-myalpha[1:4] %>% pander()
+myalpha[1:3] %>% pander()
 ```
 
 
@@ -1231,8 +1370,12 @@ assist[, Use_P3M := ordered(Use_P3M, levels = c("Never: not used in the last 3 m
 ```
 
 ```{r}
-gtsummary::tbl_cross(assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], 
-                     row = Substance, col = Use_P3M, margin = NULL, percent = "row")
+# gtsummary::tbl_cross(assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], 
+#                      row = Substance, col = Use_P3M, margin = NULL, percent = "row")
+
+label(assist$Use_P3M) <- "Frequency of Use in the Past Three Months"
+
+table1(~ Use_P3M | Substance, data = assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], transpose = TRUE, overall = FALSE)
 ```
 
 ### Risk Categories
