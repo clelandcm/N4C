@@ -931,12 +931,12 @@ label(DT$bl_artoutcome1f) <- "How confident are you that HIV medication will dec
 label(DT$bl_artoutcome1g) <- "How confident are you that HIV medication will prevent you from needing to be hospitalized?"
 
 erlen_oe <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .SD, .SDcols = names(n4c) %like% "pid|artoutcome1"], id.vars = "pid")
+                      .SD, .SDcols = names(n4c) %like% "pid|bl_artoutcome1"], id.vars = "pid")
 
 label(erlen_oe$value) <- "Overall ART Outcome Expectancy (1-10)"
 
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .SD, .SDcols = names(DT) %like% "artoutcome1"])
+                      .SD, .SDcols = names(DT) %like% "bl_artoutcome1"])
 ```
 
 <br>
@@ -952,7 +952,7 @@ table1(~ `Overall ART Outcome Expectancy (1-10)`,
 Coefficient Alpha
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-              .SD, .SDcols = names(n4c) %like% "artoutcome1"] %>%
+              .SD, .SDcols = names(n4c) %like% "bl_artoutcome1"] %>%
   psych::alpha()
 
 myalpha[1:3] %>% pander()
