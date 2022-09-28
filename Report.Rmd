@@ -491,9 +491,12 @@ demog <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr
 demog[, Enrolled := pid %in% Enrolled]
 ```
 
-```{r}
-gtsummary::tbl_cross(demog, row = PHS_cat, col = Hispanic)
+```{r, results='asis'}
+mytab1 <- gtsummary::tbl_cross(demog, row = PHS_cat, col = Hispanic)
+print(mytab1)
 ```
+
+<br>
 
 ```{r}
 with(demog, 
@@ -616,8 +619,9 @@ table1(~ ., data = n4c[pid %in% Enrolled & redcap_event_name == "Screen 1 (Arm 1
 ```
 
 ### PHS Categories
-```{r}
-gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date)], row = PHS_cat, col = Hispanic)
+```{r, results='asis'}
+mytab2 <- gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date)], row = PHS_cat, col = Hispanic)
+print(mytab2)
 ```
 
 ```{r}
