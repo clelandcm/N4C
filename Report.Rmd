@@ -624,6 +624,8 @@ mytab2 <- gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date)], row = 
 print(mytab2)
 ```
 
+<br>
+
 ```{r}
 with(demog[Enrolled == TRUE & !is.na(bl_date)], 
      table(PHS_cat, Hispanic, scr1_sexbirth)) %>% 
@@ -1373,13 +1375,15 @@ assist[, Use_P3M := ordered(Use_P3M, levels = c("Never: not used in the last 3 m
                                                 "Daily or almost daily: 5 to 7 days per week"))]
 ```
 
-```{r}
-# gtsummary::tbl_cross(assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], 
-#                      row = Substance, col = Use_P3M, margin = NULL, percent = "row")
+```{r, results='asis'}
+mytab3 <- gtsummary::tbl_cross(assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], 
+                      row = Substance, col = Use_P3M, margin = NULL, percent = "row")
 
-label(assist$Use_P3M) <- "Frequency of Use in the Past Three Months"
+print(mytab3)
 
-table1(~ Use_P3M | Substance, data = assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], transpose = TRUE, overall = FALSE)
+# label(assist$Use_P3M) <- "Frequency of Use in the Past Three Months"
+# 
+# table1(~ Use_P3M | Substance, data = assist[,Substance := car::recode(Substance, "'tob'='Tobacco';'alc'='Alcohol';'can'='Cannabis';'coc'='Cocaine';'pstm'='Prescription Stimulants';'mthp'='Methamphetamine';'inh'='Inhalants';'sed'='Sedatives';'hal'='Hallucinogens';'sopi'='Street Opioids';'popi'='Prescription Opioids';'oth'='Other Drugs'")], transpose = TRUE, overall = FALSE)
 ```
 
 ### Risk Categories
