@@ -1705,13 +1705,52 @@ table1(~ ., data = EMA_eod)
 <br>
 
 ```{r}
+n4c[is.na(v1_ema4_q9_v2) & !is.na(v1_ema4_q7) & v1_ema4_q7 == "No", v1_ema4_q9_v2 := "None of my doses"]
+n4c[is.na(v1_ema4_q9) & !is.na(v1_ema4_q7) & v1_ema4_q7 == "No", v1_ema4_q9 := "0 - None of the prescribed doses"]
+n4c[is.na(v1_ema4_q9_v2) & v1_ema4_q9 == "0 - None of the prescribed doses", v1_ema4_q9_v2 := "None of my doses"]
+
 n4c[is.na(v1_ema4_q9_v2) & v1_ema4_q9 == "10 - All of the prescribed doses", v1_ema4_q9_v2 := "All of my HIV medication doses"]
 n4c[is.na(v1_ema4_q9) & v1_ema4_q9_v2 == "All of my HIV medication doses", v1_ema4_q9 := "10 - All of the prescribed doses"]
 n4c[is.na(v1_ema4_q9_v2) & v1_ema4_q9 %in% c("2","6"), v1_ema4_q9_v2 := "Some of my doses"]
+
+n4c[, v1_ema4_q9 := factor(v1_ema4_q9, levels = c('0 - None of the prescribed doses','1','2','6','10 - All of the prescribed doses'))]
+n4c[, v1_ema4_q9_v2 := factor(v1_ema4_q9_v2, levels = c('None of my doses','Some of my doses','Most of my doses','All of my HIV medication doses'))]
+
 label(n4c$v1_ema4_q9_v2) <- "How much of your HIV medication did you take today? (Version 2)"
 label(n4c$v1_ema4_q9) <- "How much of your HIV medication did you take today? (Version 1)"
-table1(~ v1_ema4_q9 + v1_ema4_q9_v2, data = n4c[!is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])
+label(n4c$v1_ema4_q7) <- "Did you take any HIV medication today?"
+
+table1(~ v1_ema4_q9 + v1_ema4_q9_v2 + v1_ema4_q7, data = n4c[!is.na(v1_ema4_q7) | !is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])
 ```
+
+```{r, echo=FALSE, eval=FALSE}
+n4c[!is.na(v1_ema4_q7) | !is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2), .(pid, v1_ema4_q7, v1_ema4_q9, v1_ema4_q9_v2)]
+```
+
+<br>
+
+#### What are the main reasons you did not take HIV medication today?
+
+```{r}
+label(n4c$v1_ema4_q8___1) <- "HIV medication is not prescribed for me at this time"  
+label(n4c$v1_ema4_q8___2) <- "Prescription needs to be filled"
+label(n4c$v1_ema4_q8___3) <- "Sold HIV medications because needed cash"
+label(n4c$v1_ema4_q8___4) <- "Did not want side effects"
+label(n4c$v1_ema4_q8___5) <- "Taking a break from HIV medications"
+label(n4c$v1_ema4_q8___6) <- "Do not trust HIV medications"
+label(n4c$v1_ema4_q8___7) <- "Do not want anyone to find out I am living with HIV" 
+label(n4c$v1_ema4_q8___8) <- "My numbers have been good (viral load, T-cells)"
+label(n4c$v1_ema4_q8___9) <- "Alcohol or drug use got in the way"
+label(n4c$v1_ema4_q8___10) <- "Mental health got in the way"
+label(n4c$v1_ema4_q8___996) <- "Other reasons"
+```
+
+```{r}
+table1(~ ., data = n4c[v1_ema4_q7 == "No" | v1_ema4_q9_v2 == "None of my doses", 
+                       .SD, .SDcols = names(n4c) %like% "^v1_ema4_q8___"])
+```
+
+<br>
 
 # Follow-Up
 ## Nine Months
