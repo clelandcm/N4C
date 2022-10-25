@@ -1762,6 +1762,8 @@ label(DT$FU1_Due) <- "First Follow-Up Due"
 table1(~ FU1_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
+* n=`r length(na.omit(n4c$fu1_end))` first follow-up interviews completed 
+
 ## Eighteen Months
 ```{r}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU2_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 548, "FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline")]
@@ -1776,7 +1778,11 @@ table1(~ FU2_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !i
 label(n4c$withdrawal_form) <- "Participation has concluded in the study due to:"
   
 table1(~ withdrawal_form, data = n4c[!is.na(withdrawal_date)])
+```
 
+<br>
+
+```{r}
 DTw <- data.frame(`Check on withdrawals` = paste0("n=", nrow(n4c[!is.na(withdrawal_date),]), " withdrawals from study so far"))
 setDT(DTw)
 
