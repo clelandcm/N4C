@@ -188,7 +188,7 @@ n4c_cohort <- n4c %>%
     s2_e = scr2 %>% filter(scr2_eligibility == 'Eligible'),
     s2_ie = scr2 %>% filter(scr2_eligibility == 'Ineligible'),
     enrl = .full %>% filter(redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & enroll_consent == "Yes"),
-    bl = enrl %>% filter(!is.na(bl_date)),
+    bl = .full %>% filter(!is.na(bl_date)),
     det = .full %>% filter(redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & blood_vl_q2 == "No"),
     undet = .full %>% filter(redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & blood_vl_q2 == "Yes")
     ) %>%
