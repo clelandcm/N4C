@@ -1765,12 +1765,13 @@ DT[, Time_Cat := car::recode(Time_Cat, "'(0,273]'='0-273 Days';
                              as.factor = TRUE,
                              levels = c('0-273 Days','274+ Days'))]
 
-FUrate <- merge(DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),.(pid, Days_Since_BL, Time_Cat)],
-                DT[redcap_event_name == "follow_up_1_interv_arm_2" & !is.na(follow_up_1_interview_editing_complete),.(pid, follow_up_1_interview_editing_complete, fu1_date)],
+FUrate <- merge(DT[redcap_event_name == "baseline_interview_arm_2" & is.na(redcap_repeat_instrument),.(pid, Days_Since_BL, Time_Cat)],
+                DT[redcap_event_name == "follow_up_1_interv_arm_2" & is.na(redcap_repeat_instrument),.(pid, follow_up_1_interview_editing_complete, fu1_date)],
                 all=TRUE)
 
-FUrate[, FU1_Completion := ifelse(is.na(follow_up_1_interview_editing_complete) | 
-                                    follow_up_1_interview_editing_complete != 2, "No", "Yes")]
+FUrate[, FU1_Completion := ifelse(!is.na(follow_up_1_interview_editing_complete) & 
+                                    follow_up_1_interview_editing_complete == 2, "Yes",
+                                  ifelse(Days_Since_BL > 334, "Nine-Month Follow-Up Missed", NA))]
 
 label(FUrate$FU1_Completion) <- "Nine-Month Interview Completed"
 ```
@@ -1782,12 +1783,15 @@ table(DT$pid[DT$redcap_event_name == "baseline_interview_arm_2" & !is.na(DT$bl_d
 ```
 
 ## Nine Months
-### Interview Completion by Days Since Baseline
+### Interview Completion
 ```{r}
-table1(~ FU1_Completion | Time_Cat, data = FUrate)
+table1(~ FU1_Completion, data = FUrate[!is.na(FU1_Completion)])
 ```
 
 <br>
+
+* n=`r nrow(FUrate[is.na(FU1_Completion) | FU1_Completion != "Yes" & Days_Since_BL <= 334])` pending nine-month follow-up interviews
+* n=`r nrow(FUrate[(is.na(FU1_Completion) | FU1_Completion != "Yes") & Days_Since_BL > 334])` missed nine-month follow-up interviews
 
 ```{r, include=FALSE}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU1_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 274, "FU1 Not Due Yet", "FU1 Due, 274+ Days Since Baseline")]
