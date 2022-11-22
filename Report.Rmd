@@ -645,6 +645,26 @@ table1(~ Gender_Identity, data = gendID_m[pid %in% Enrolled,])
 table1(~ Sexual_Orientation, data = sexor_m[pid %in% Enrolled,])
 ```
 
+### Sexual or Gender Minority
+```{r}
+sexmin <- merge(gendID_m, sexor_m, all = TRUE)
+sexmin <- merge(sexmin, n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", 
+                            .(pid, scr1_sexbirth)], all=TRUE)
+
+sexmin[, SO_Minority := ifelse(Sexual_Orientation == "Straight or heterosexual", "No", "Yes")]
+sexmin[, GI_Minority := ifelse((Gender_Identity == "Man, male" & scr1_sexbirth == "Male") | 
+                               (Gender_Identity == "Woman, female" & scr1_sexbirth == "Female"), "No", "Yes")]
+
+sexmin[, Enrolled := pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)]]
+```
+
+```{r, results='asis'}
+mytab9 <- gtsummary::tbl_cross(sexmin[Enrolled == TRUE], row = SO_Minority, 
+                               col = GI_Minority, percent = "cell",
+                               label = list(SO_Minority ~ "Sexual Orientation Minority", GI_Minority ~ "Gender Minority"))
+print(mytab9)
+```
+
 ### Other Demographics
 ```{r}
 label(DT$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
@@ -663,6 +683,22 @@ table1(~ bl_health1 + bl_health2,
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .(bl_diagnosis1, bl_diagnosis2, bl_diagnosis3,bl_diagnosis4)])
+```
+
+<br>
+
+```{r}
+HIVdx <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr1_age)],
+               n4c[pid %in% Enrolled & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), 
+                   .(pid, bl_date, bl_diagnosis2)],
+               all.x = FALSE, all.y = TRUE)
+
+HIVdx[, Years_HIV := scr1_age - bl_diagnosis2]
+HIVdx[Years_HIV < 0, Years_HIV := 0]
+
+label(HIVdx$Years_HIV) <- "Years Living with HIV at Baseline"
+
+table1(~ Years_HIV, data = HIVdx)
 ```
 
 ## ART
@@ -1867,4 +1903,8 @@ write.csv(plist[order(bl_date), .(pid, `Baseline Date` = bl_date, Race, Ethnicit
 write.csv(plist[order(bl_date), .(pid, `Baseline Date` = bl_date, Race, Ethnicity, `Assigned Sex at Birth`, Sexual_Orientation, Gender_Identity, Age, `Age Unit`)],
           "c:/chuck/NYU/Gwadz/Adolescent Longitudinal/participant-list.csv")
 ```
+
+
+
+
 
