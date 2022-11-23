@@ -682,13 +682,6 @@ table1(~ bl_health1 + bl_health2,
 
 ## Diagnosis
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .(bl_diagnosis1, bl_diagnosis2, bl_diagnosis3,bl_diagnosis4)])
-```
-
-<br>
-
-```{r}
 HIVdx <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr1_age)],
                n4c[pid %in% Enrolled & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), 
                    .(pid, bl_date, bl_diagnosis2)],
@@ -697,9 +690,14 @@ HIVdx <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr
 HIVdx[, Years_HIV := scr1_age - bl_diagnosis2]
 HIVdx[Years_HIV < 0, Years_HIV := 0]
 
-label(HIVdx$Years_HIV) <- "Years Living with HIV at Baseline"
+DT <- merge(DT, HIVdx[,.(pid,bl_date,Years_HIV)], by = c("pid","bl_date"), all.x = TRUE)
 
-table1(~ Years_HIV, data = HIVdx)
+label(DT$Years_HIV) <- "Years Living with HIV at Baseline"
+```
+
+```{r}
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+                      .(bl_diagnosis1, bl_diagnosis2, bl_diagnosis3,bl_diagnosis4,Years_HIV)])
 ```
 
 ## ART
