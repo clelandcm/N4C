@@ -615,7 +615,8 @@ enroll_new_VL[bl_date == Sys.Date(), .(`Viral Load` = blood_vl_q2, `Cumulative E
 ## Demographics (Baseline Sample)
 ### Age, Sex at Birth, and Race/Ethnicity
 ```{r}
-table1(~ ., data = n4c[pid %in% Enrolled & redcap_event_name == "Screen 1 (Arm 1: Screener)", .SD, .SDcols = names(n4c) %like% "scr1_sexbirth$|^scr1_ethnicity|^scr1_race___|scr1_age"])
+table1(~ ., data = n4c[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)] & 
+                         redcap_event_name == "Screen 1 (Arm 1: Screener)", .SD, .SDcols = names(n4c) %like% "scr1_sexbirth$|^scr1_ethnicity|^scr1_race___|scr1_age"])
 ```
 
 ### PHS Categories
@@ -637,12 +638,12 @@ with(demog[Enrolled == TRUE & !is.na(bl_date)],
 
 ### Gender Identity
 ```{r}
-table1(~ Gender_Identity, data = gendID_m[pid %in% Enrolled,])
+table1(~ Gender_Identity, data = gendID_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual Identity
 ```{r}
-table1(~ Sexual_Orientation, data = sexor_m[pid %in% Enrolled,])
+table1(~ Sexual_Orientation, data = sexor_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual or Gender Minority
