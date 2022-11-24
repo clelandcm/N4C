@@ -234,10 +234,10 @@ study_consort <- n4c_cohort %>%
     "bl", 0, 0, cohort_count_adorn(n4c_cohort, bl)
   ) %>%    
       consort_box_add(
-    "det", -2, 0, cohort_count_adorn(n4c_cohort, det)
+    "det", -2, 10, cohort_count_adorn(n4c_cohort, det)
   ) %>%    
       consort_box_add(
-    "undet", 2, 0, cohort_count_adorn(n4c_cohort, undet)
+    "undet", 2, 10, cohort_count_adorn(n4c_cohort, undet)
   ) %>%    
  consort_arrow_add(start = "scr1", end = "s1_e", end_side = "top") %>%
   consort_arrow_add(start_x = 0, start_y = 44, end = "s1_ie", end_side = "left") %>%
