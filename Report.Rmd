@@ -547,13 +547,13 @@ enroll_new_m <- melt(enroll_new, id.vars = c("day","Row"),
 
 figtop <- ceiling(enroll_new_m[day == Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'), .(max(num))])$V1
 
-while(figtop %% 8 > 0) {figtop <- figtop + 1}
+while(figtop %% 12 > 0) {figtop <- figtop + 1}
 
 ggplot(enroll_new_m[day <= Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'),], 
        aes(x = day, y = num, group = type, color = type)) + 
   geom_path() +
-  scale_y_continuous(limits=c(0,figtop), breaks=seq(0,figtop,8)) +
-  scale_x_date(date_breaks = "2 weeks", date_labels = "%b-%d") +
+  scale_y_continuous(limits=c(0,figtop), breaks=seq(0,figtop,12)) +
+  scale_x_date(date_breaks = "4 weeks", date_labels = "%b-%d") +
   ylab("Cumulative Number Enrolled") + xlab("") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=6),
@@ -587,13 +587,13 @@ enroll_new_VL[, blood_vl_q2 := car::recode(blood_vl_q2, "'No'='Detectable';'Yes'
 
 figtop_VL <- max(enroll_new_VL$`Cumulative Enrolled`)
 
-while(figtop_VL %% 8 > 0) {figtop_VL <- figtop_VL + 1}
+while(figtop_VL %% 12 > 0) {figtop_VL <- figtop_VL + 1}
 
 ggplot(enroll_new_VL[bl_date <= Sys.Date() & !is.na(blood_vl_q2),], 
        aes(x = bl_date, y = `Cumulative Enrolled`, group = blood_vl_q2, color = blood_vl_q2)) + 
   geom_path() +
-  scale_y_continuous(limits=c(0,figtop_VL), breaks=seq(0,figtop_VL,8)) +
-  scale_x_date(date_breaks = "2 weeks", date_labels = "%b-%d") +
+  scale_y_continuous(limits=c(0,figtop_VL), breaks=seq(0,figtop_VL,12)) +
+  scale_x_date(date_breaks = "4 weeks", date_labels = "%b-%d") +
   ylab("Cumulative Number Enrolled") + xlab("") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=6),
