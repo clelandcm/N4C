@@ -82,7 +82,7 @@ meta_DT[!is.na(choices), factlab := gsub("<.*?>", "", factlab)]
 meta_DT[!is.na(attriblab), attriblab := gsub("<.*?>", "", attriblab)]
 
 DT <- REDCapR::redcap_read_oneshot(redcap_uri=uri, raw_or_label = "raw", token=token)$data
-DT_n <- REDCapR::redcap_read_oneshot(redcap_uri=uri, raw_or_label = "raw", token=token)$data
+DT_n <- DT
 
 # setDT(DT)
 
@@ -1563,13 +1563,13 @@ myalpha[1:4] %>% pander()
 # SU Screening
 ## Acceptance of Screening
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "drug_accept_test|drug_sample2$"])
+table1(~ drug_accept_test, data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Substances Detected
 ### First Sample
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_accept_test == "Yes (Accepted)", .SD, .SDcols = names(n4c) %like% "^drug_sample1_test"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_accept_test == "Yes (Accepted)", .SD, .SDcols = names(DT) %like% "^drug_sample1_test"])
 ```
 
 ### Second Sample
@@ -1621,8 +1621,16 @@ EMA_Actual <- rbindlist(list(n4c[!is.na(v1_ema_start_timestamp), .(pid, redcap_e
                              n4c[!is.na(v1_ema4_start_timestamp), .(pid, redcap_event_name, EMA_time = v1_ema4_start_timestamp)]))
 
 EMA_Actual[, EMA_day := as.Date(format(EMA_time, "%Y-%m-%d"))]
-EMA_Actual[, EMA_event := substring(redcap_event_name, first = 11, last = 12)]
-EMA_Actual[, Day := substring(redcap_event_name, first = 8, last = 9)]
+
+EMA_Actual[, EMA_event := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 11, last = 12),
+                          ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 12, last = 13), NA))]
+             
+EMA_Actual[, Day := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 8, last = 9),
+                    ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 9, last = 10), NA))]
 
 EMA_all <- merge(EMA_Actual[EMA_day < Sys.Date()], EMA_Planned, all = TRUE, by = c('pid','EMA_day','EMA_event','Day'))
 ```
