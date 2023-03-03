@@ -320,6 +320,44 @@ Eligible <- na.omit(DT$pid[DT$scr2_eligibility == "Eligible"])
 Enrolled <- na.omit(DT$pid[DT$baseline_consent_form_complete == 2])
 ```
 
+# Withdrawals 
+```{r}
+rcon <- redcapAPI::redcapConnection(url = 'https://redcap.nyu.edu/api/', token=token)
+wform <- redcapAPI::exportRecords(rcon, batch.size = 700, 
+                                  fields = c("pid","withdrawal_form","withdrawal_date"))
+
+wform <- subset(wform, !is.na(withdrawal_form) | !is.na(withdrawal_date))
+
+setDT(wform)
+
+wform[, withdrawal_form := car::recode(withdrawal_form, "1='declined to participate';
+                                                         2='moved out of area';
+                                                         3='deceased';
+                                                         4='withdrawn due to incarceration';
+                                                         5='withdrawn due to previous enrollment';
+                                                         996='withdrawn for other reason'",
+                                       levels = c('declined to participate',
+                                                  'moved out of area',
+                                                  'deceased',
+                                                  'withdrawn due to incarceration',
+                                                  'withdrawn due to previous enrollment',
+                                                  'withdrawn for other reason'))]
+
+label(wform$withdrawal_form) <- "Participation has concluded in the study due to:"
+  
+table1(~ withdrawal_form, data = wform)
+```
+
+<br>
+
+* **n=`r nrow(wform)`** withdrawals from study     
+* **n=`r sum(!(Enrolled %in% wform$pid))`** enrolled participants remaining after withdrawals     
+* withdrawn participants are not included in summaries of baseline and follow-ups
+
+```{r, echo=FALSE}
+Enrolled <- setdiff(Enrolled, wform$pid)
+```
+
 # Screen 1
 ```{r}
 table1(~ scr1_contact_form + scr1_recruit + scr1_recruit_social + scr1_consent +
@@ -1851,24 +1889,6 @@ DT[, FU2_Due := factor(FU2_Due, levels = c("FU2 Not Due Yet", "FU2 Due, 548+ Day
 label(DT$FU2_Due) <- "Second Follow-Up Due"
 
 table1(~ FU2_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
-```
-
-# Withdrawals 
-```{r}
-label(n4c$withdrawal_form) <- "Participation has concluded in the study due to:"
-  
-table1(~ withdrawal_form, data = n4c[!is.na(withdrawal_date)])
-```
-
-<br>
-
-```{r}
-DTw <- data.frame(`Check on withdrawals` = paste0("n=", nrow(n4c[!is.na(withdrawal_date),]), " withdrawals from study so far"))
-setDT(DTw)
-
-setnames(DTw, old = "Check.on.withdrawals", new = "Check on withdrawals")
-
-knitr::kable(DTw)
 ```
 
 ```{r, eval=FALSE}
