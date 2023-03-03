@@ -1632,31 +1632,93 @@ cat("No second drug samples tested as of", format(Sys.Date(), "%B %d, %Y"))
 * The earliest **eighth** burst of EMA will begin on `r format(min(n4c$ema_startburst8, na.rm=TRUE), "%A, %B %d, %Y")`
 
 ```{r}
-ema_melt <- melt(n4c[redcap_event_name == "EMA form (Arm 3: EMA Arm)",.SD, .SDcols = names(n4c) %like% "pid|startburst"],
-     id.vars = "pid", variable.name = "Burst", value.name = "Start_Date")
+ema_melt <- melt(n4c[redcap_event_name == "EMA form (Arm 3: EMA Arm)",.SD, 
+                     .SDcols = names(n4c) %like% "pid|startburst|redcap_event_name"],
+     id.vars = c("pid","redcap_event_name"), 
+     variable.name = "Burst", 
+     value.name = "Start_Date")
 
+ema_melt[, Burst := gsub("ema_startburst", "B", Burst)]
 ema_melt[, Elapsed := as.integer(difftime(Sys.Date(), Start_Date, units = "days"))]
-ema_melt[, Expected := ifelse(Elapsed > 7, 28, ifelse(Elapsed %in% 1:7, (Elapsed - 1) * 4, as.integer(NA)))]
+ema_melt[, Expected := ifelse(Elapsed > 7, 28, 
+                              ifelse(Elapsed %in% 1:7, (Elapsed - 1) * 4, as.integer(NA)))]
 ema_melt[, Days_Elapsed := ifelse(Elapsed > 7, 7, Elapsed - 1)]
 ema_melt[, Last_Date := Start_Date + Days_Elapsed - 1]
+```
 
-ema_3_items <- names(n4c)[grep("pid|redcap_event_name|v1_ema_", names(n4c))]
+```{r}
 ema_EOD_items <- names(n4c)[grep("pid|redcap_event_name|v1_ema4_", names(n4c))]
 
-ema_F3 <- n4c[grepl("Arm 3: EMA Arm", redcap_event_name) == TRUE & !is.na(v1_ema_start_timestamp), .SD, .SDcols = ema_3_items]
-ema_EOD <- n4c[grepl("Arm 3: EMA Arm", redcap_event_name) == TRUE & !is.na(v1_ema4_start_timestamp), .SD, .SDcols = ema_EOD_items]
+ema_EOD <- n4c[grepl("Arm 3: EMA Arm", redcap_event_name) == TRUE & 
+                 !is.na(v1_ema4_start_timestamp), .SD, .SDcols = ema_EOD_items]
 
-EMA_Planned <- ema_melt[!is.na(Expected) & Expected >= 1, .(EMA_day = seq(Start_Date, Last_Date, 1),
-                                            Day = seq(1, as.numeric(difftime(Last_Date, Start_Date, units = 'days')) + 1, 1)), 
-                        by = .(pid, Burst, Elapsed, Expected, Days_Elapsed, Start_Date, Last_Date)]
+ema_EOD[, EMA_event := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 11, last = 12),
+                          ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 12, last = 13), NA))]
+             
+ema_EOD[, Day := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 8, last = 9),
+                    ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 9, last = 10), NA))]
+
+ema_EOD[, Burst := ifelse(nchar(redcap_event_name) == 29, 
+                             substring(redcap_event_name, first = 5, last = 6),
+                      ifelse(nchar(redcap_event_name) == 30,
+                             substring(redcap_event_name, first = 5, last = 7), NA))]
+
+ema_EOD[, Burst := car::recode(Burst, "'M2'='B1';'M4'='B2';'M6'='B3';'M8'='B4';
+                                          'M10'='B5';'M12'='B6';'M14'='B7';'M16'='B8'", 
+                               as.factor = FALSE)]
+
+ema_EOD[, redcap_event_name := NULL]
+```
+
+```{r}
+ema_3_items <- names(n4c)[grep("pid|redcap_event_name|v1_ema_", names(n4c))]
+
+ema_F3 <- n4c[grepl("Arm 3: EMA Arm", redcap_event_name) == TRUE & 
+                !is.na(v1_ema_start_timestamp), .SD, .SDcols = ema_3_items]
+
+ema_F3[, EMA_event := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 11, last = 12),
+                          ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 12, last = 13), NA))]
+             
+ema_F3[, Day := ifelse(nchar(redcap_event_name) == 29, 
+                                 substring(redcap_event_name, first = 8, last = 9),
+                    ifelse(nchar(redcap_event_name) == 30,
+                                 substring(redcap_event_name, first = 9, last = 10), NA))]
+
+ema_F3[, Burst := ifelse(nchar(redcap_event_name) == 29, 
+                             substring(redcap_event_name, first = 5, last = 6),
+                      ifelse(nchar(redcap_event_name) == 30,
+                             substring(redcap_event_name, first = 5, last = 7), NA))]
+
+ema_F3[, Burst := car::recode(Burst, "'M2'='B1';'M4'='B2';'M6'='B3';'M8'='B4';
+                                          'M10'='B5';'M12'='B6';'M14'='B7';'M16'='B8'", 
+                               as.factor = FALSE)]
+
+ema_F3[, redcap_event_name := NULL]
+```
+
+```{r}
+EMA_Planned <- ema_melt[!is.na(Expected) & Expected >= 1, 
+                        .(EMA_day = seq(Start_Date, Last_Date, 1),
+                          Day = seq(1, as.numeric(difftime(Last_Date, Start_Date, units = 'days')) + 1, 1)), 
+                        by = .(pid, redcap_event_name, Burst, Elapsed, Expected, Days_Elapsed, Start_Date, Last_Date)]
 
 EMA_Planned <- EMA_Planned[, .(EMA_event = c("A1","A2","A3","A4")), 
-                           by = .(pid, Burst, Start_Date, Last_Date, EMA_day, Day)]
+                           by = .(pid, redcap_event_name, Burst, Start_Date, Last_Date, EMA_day, Day)]
 
 EMA_Planned[, Day := paste0("D", Day)]
+```
 
-EMA_Actual <- rbindlist(list(n4c[!is.na(v1_ema_start_timestamp), .(pid, redcap_event_name, EMA_time = v1_ema_start_timestamp)],
-                             n4c[!is.na(v1_ema4_start_timestamp), .(pid, redcap_event_name, EMA_time = v1_ema4_start_timestamp)]))
+```{r}
+EMA_Actual <- rbindlist(list(n4c[!is.na(v1_ema_start_timestamp), 
+                                 .(pid, redcap_event_name, EMA_time = v1_ema_start_timestamp)],
+                             n4c[!is.na(v1_ema4_start_timestamp), 
+                                 .(pid, redcap_event_name, EMA_time = v1_ema4_start_timestamp)]))
 
 EMA_Actual[, EMA_day := as.Date(format(EMA_time, "%Y-%m-%d"))]
 
@@ -1670,7 +1732,29 @@ EMA_Actual[, Day := ifelse(nchar(redcap_event_name) == 29,
                     ifelse(nchar(redcap_event_name) == 30,
                                  substring(redcap_event_name, first = 9, last = 10), NA))]
 
-EMA_all <- merge(EMA_Actual[EMA_day < Sys.Date()], EMA_Planned, all = TRUE, by = c('pid','EMA_day','EMA_event','Day'))
+EMA_Actual[, Burst := ifelse(nchar(redcap_event_name) == 29, 
+                             substring(redcap_event_name, first = 5, last = 6),
+                      ifelse(nchar(redcap_event_name) == 30,
+                             substring(redcap_event_name, first = 5, last = 7), NA))]
+
+EMA_Actual[, Burst := car::recode(Burst, "'M2'='B1';'M4'='B2';'M6'='B3';'M8'='B4';
+                                          'M10'='B5';'M12'='B6';'M14'='B7';'M16'='B8'", 
+                               as.factor = FALSE)]
+```
+
+```{r}
+EMA_all <- merge(EMA_Actual[EMA_day < Sys.Date(), .(pid, EMA_day, Burst, Day, EMA_event, EMA_time)], 
+                 EMA_Planned[,.(pid, EMA_day, Burst, Day, EMA_event)], 
+                 all = TRUE,  
+                 by = c('pid','EMA_day','Burst','Day','EMA_event'))
+
+EMA_all <- merge(EMA_all, ema_F3, 
+      by.x = c('pid','Burst','Day','EMA_event','EMA_time'), 
+      by.y = c('pid','Burst','Day','EMA_event','v1_ema_start_timestamp'), all = TRUE)
+
+EMA_all <- merge(EMA_all, ema_EOD,       
+      by.x = c('pid','Burst','Day','EMA_event','EMA_time'), 
+      by.y = c('pid','Burst','Day','EMA_event','v1_ema4_start_timestamp'), all = TRUE)
 ```
 
 ## Responses To EMA Prompts
@@ -1686,30 +1770,36 @@ table1(~ Responded | EMA_event,
 ### Responses Received By EMA Day Within Burst
 ```{r}
 table1(~ Responded | Day, 
-       data = EMA_all[, .(Responded = !is.na(EMA_time)), by = .(EMA_event, Day, Burst)], overall = FALSE)
+       data = EMA_all[, .(Responded = !is.na(EMA_time)), 
+                      by = .(EMA_event, Day, Burst)], overall = FALSE)
 ```
 
 ### Responses Received By Burst
 ```{r}
 table1(~ Responded | Burst, 
-       data = EMA_all[, .(Responded = !is.na(EMA_time)), by = .(EMA_event, Day, Burst)], overall = FALSE)
+       data = EMA_all[, .(Responded = !is.na(EMA_time)), 
+                      by = .(EMA_event, Day, Burst)], overall = FALSE)
 ```
 
 ### Responses To All EMA Prompts
 ```{r}
 table1(~ Responded, 
-       data = EMA_all[, .(Responded = !is.na(EMA_time)), by = .(EMA_event, Day, Burst)])
+       data = EMA_all[, .(Responded = !is.na(EMA_time)), 
+                      by = .(EMA_event, Day, Burst)])
 ```
 
+
+```{r, eval=FALSE}
 ## Number of Non-Missing EMA Items
 ### First Three of the Day
-```{r}
-ema_F3[, .(Non_Missing_Items = sum(!is.na(.SD))), by = .(pid, redcap_event_name)][,.(Non_Missing_Items)] %>% summary()
+ema_F3[, .(Non_Missing_Items = sum(!is.na(.SD))), 
+       by = .(pid, EMA_event, Day, Burst)][,.(Non_Missing_Items)] %>% summary()
 ```
 
+```{r, eval=FALSE}
 ### End of the Day
-```{r}
-ema_EOD[, .(Non_Missing_Items = sum(!is.na(.SD))), by = .(pid, redcap_event_name)][,.(Non_Missing_Items)] %>% summary()
+ema_EOD[, .(Non_Missing_Items = sum(!is.na(.SD))), 
+        by = .(pid, redcap_event_name)][,.(Non_Missing_Items)] %>% summary()
 ```
 
 ## Item Summaries
@@ -1801,7 +1891,8 @@ label(n4c$v1_ema4_q9_v2) <- "How much of your HIV medication did you take today?
 label(n4c$v1_ema4_q9) <- "How much of your HIV medication did you take today? (Version 1)"
 label(n4c$v1_ema4_q7) <- "Did you take any HIV medication today?"
 
-table1(~ v1_ema4_q9 + v1_ema4_q9_v2 + v1_ema4_q7, data = n4c[!is.na(v1_ema4_q7) | !is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])
+table1(~ v1_ema4_q9 + v1_ema4_q9_v2 + v1_ema4_q7, 
+       data = n4c[!is.na(v1_ema4_q7) | !is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
