@@ -1111,6 +1111,126 @@ label(DT$ACES_sum) <- "Number of Yes Responses to ACES Items (0-21)"
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_aces\\d|ACES_sum"])
 ```
 
+## Social Network Members
+
+```{r}
+snet_items <- names(n4c)[grep("pid|redcap_event_name|bl_person[1-5][a-n]|bl_person[1-5]", names(n4c))]
+
+snet <- n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" &
+              pid %in% Enrolled, 
+            .SD, .SDcols = snet_items]
+
+sn_bl <- melt(snet, id.vars = c("pid","redcap_event_name"),
+     measure.vars = list(c("bl_person1","bl_person2","bl_person3","bl_person4","bl_person5"),
+                         c("bl_person1a","bl_person2a","bl_person3a","bl_person4a","bl_person5a"),
+                         c("bl_person1b","bl_person2b","bl_person3b","bl_person4b","bl_person5b"),
+                         c("bl_person1c___1","bl_person2c___1","bl_person3c___1","bl_person4c___1","bl_person5c___1"),   
+                         c("bl_person1c___2","bl_person2c___2","bl_person3c___2","bl_person4c___2","bl_person5c___2"),
+                         c("bl_person1c___3","bl_person2c___3","bl_person3c___3","bl_person4c___3","bl_person5c___3"),
+                         c("bl_person1c___996","bl_person2c___996","bl_person3c___996","bl_person4c___996","bl_person5c___996"),
+                         c("bl_person1c___997","bl_person2c___997","bl_person3c___997","bl_person4c___997","bl_person5c___997"),
+                         c("bl_person1c___998","bl_person2c___998","bl_person3c___998","bl_person4c___998","bl_person5c___998"),
+                         c("bl_person1c_oth","bl_person2c_oth","bl_person3c_oth","bl_person4c_oth","bl_person5c_oth"),
+                         c("bl_person1d","bl_person2d","bl_person3d","bl_person4d","bl_person5d"),
+                         c("bl_person1e___1","bl_person2e___1","bl_person3e___1","bl_person4e___1","bl_person5e___1"),   
+                         c("bl_person1e___2","bl_person2e___2","bl_person3e___2","bl_person4e___2","bl_person5e___2"),
+                         c("bl_person1e___3","bl_person2e___3","bl_person3e___3","bl_person4e___3","bl_person5e___3"),
+                         c("bl_person1e___4","bl_person2e___4","bl_person3e___4","bl_person4e___4","bl_person5e___4"),
+                         c("bl_person1e___5","bl_person2e___5","bl_person3e___5","bl_person4e___5","bl_person5e___5"),
+                         c("bl_person1e___996","bl_person2e___996","bl_person3e___996","bl_person4e___996","bl_person5e___996"),
+                         c("bl_person1e___997","bl_person2e___997","bl_person3e___997","bl_person4e___997","bl_person5e___997"),
+                         c("bl_person1e___998","bl_person2e___998","bl_person3e___998","bl_person4e___998","bl_person5e___998"),
+                         c("bl_person1e_oth","bl_person2e_oth","bl_person3e_oth","bl_person4e_oth","bl_person5e_oth"),
+                         c("bl_person1f","bl_person2f","bl_person3f","bl_person4f","bl_person5f"),
+                         c("bl_person1g","bl_person2g","bl_person3g","bl_person4g","bl_person5g"),
+                         c("bl_person1h","bl_person2h","bl_person3h","bl_person4h","bl_person5h"),
+                         c("bl_person1i","bl_person2i","bl_person3i","bl_person4i","bl_person5i"),
+                         c("bl_person1j","bl_person2j","bl_person3j","bl_person4j","bl_person5j"),
+                         c("bl_person1k","bl_person2k","bl_person3k","bl_person4k","bl_person5k"),
+                         c("bl_person1l","bl_person2l","bl_person3l","bl_person4l","bl_person5l"),
+                         c("bl_person1m","bl_person2m","bl_person3m","bl_person4m","bl_person5m"),
+                         c("bl_person1n","bl_person2n","bl_person3n","bl_person4n","bl_person5n")),
+     value.name = c("sn_name", "sn_a","sn_b","sn_c_1","sn_c_2","sn_c_3","sn_c_996","sn_c_997","sn_c_998","sn_c_oth",
+                    "sn_d","sn_e_1","sn_e_2","sn_e_3","sn_e_4","sn_e_5","sn_e_996","sn_e_997","sn_e_998",
+                    "sn_e_oth","sn_f","sn_g","sn_h","sn_i","sn_j","sn_k","sn_l","sn_m","sn_n"),
+     variable.name = "person")
+
+sn_bl <- sn_bl[!(sn_name == "998" | is.na(sn_name)),]
+
+sn_bl[, sn_a := forcats::fct_infreq(sn_a)]
+sn_bl[, sn_d := forcats::fct_infreq(sn_d)]
+sn_bl[, sn_n := factor(sn_n, levels = c("Daily","Weekly","Monthly","Occasionally","Refuse to answer","Don't Know"))]
+
+sn_bl[, sn_f := factor(sn_f, levels = c("Yes","No","Refuse to answer","Don't Know"))]
+sn_bl[, sn_h := factor(sn_h, levels = c("Yes","No","Refuse to answer","Don't Know"))]
+sn_bl[, sn_k := factor(sn_k, levels = c("Yes","No","Refuse to answer","Don't Know"))]
+sn_bl[, sn_l := factor(sn_l, levels = c("Yes","No","Refuse to answer","Don't Know"))]
+
+sn_bl[, sn_g := factor(sn_g, levels = c("Not diagnosed with HIV", "Diagnosed with HIV","Don't Know","Refuse to Answer"))]
+
+label(sn_bl$sn_c_1) <- "Man, male (cis-gender)"
+label(sn_bl$sn_c_2) <- "Woman, female (cis-gender)"
+label(sn_bl$sn_c_3) <- "Non-cis-gender"
+label(sn_bl$sn_e_1) <- "Black or African American"
+label(sn_bl$sn_e_2) <- "American Indian or Alaskan Native"
+label(sn_bl$sn_e_3) <- "Asian"
+label(sn_bl$sn_e_4) <- "White"
+label(sn_bl$sn_e_5) <- "Native Hawaiian or Other Pacific Islander"
+
+label(sn_bl$sn_a) <-	"Relationship to you?"
+label(sn_bl$sn_b) <-	"How old?" 
+label(sn_bl$sn_d) <-	"Sexual orientation?"
+label(sn_bl$sn_f) <-	"Latino or Hispanic?"
+label(sn_bl$sn_g) <-	"HIV status"
+label(sn_bl$sn_h) <-	"Takes HIV medications most of the time?"
+label(sn_bl$sn_i) <-	"Ever been involved in the criminal justice system"
+label(sn_bl$sn_j) <-	"Uses illicit drugs, cannabis, or drugs not prescribed?"
+label(sn_bl$sn_k) <-	"Currently attending school or a training program?"
+label(sn_bl$sn_l) <-	"Currently working at a job that is on-the-books?"
+label(sn_bl$sn_m) <-	"Years known (<1 = 0)?"
+label(sn_bl$sn_n) <-	"How often seen?"
+```
+
+```{r}
+plev <- sn_bl[, .(Npeople = factor(.N, levels=c("1","2","3","4","5")),
+                  Any_HIV = any(sn_g == "Diagnosed with HIV"),
+                  Any_CJI = any(sn_i == "Yes"),
+                  Any_ISU = any(sn_j == "Yes"),
+                  Any_SCH = any(sn_k == "Yes"),
+                  Any_WRK = any(sn_l == "Yes"),
+                  Any_PRT = any(sn_a %in% 
+                                  c("Romantic partner (i.e., spouse, current or ex-romantic partner)","Sexual partner (non-romantic sex partner)"
+                                            ))), by = .(pid)]
+
+label(plev$Npeople) <- "Number of people listed"
+label(plev$Any_HIV) <- "Any Network Members Diagnosed with HIV"
+label(plev$Any_CJI) <- "Any Network Members with Criminal Justice System Involvement"
+label(plev$Any_ISU) <- "Any Network Members with Illicit/Unprescribed Drug Use"
+label(plev$Any_SCH) <- "Any Network Members in School"
+label(plev$Any_WRK) <- "Any Network Members Working a Job on the Books"
+label(plev$Any_PRT) <- "Any Network Members Who Are Romantic or Sex Partner"
+```
+
+* **n=`r length(setdiff(Enrolled, sn_bl$pid))` enrolled participants without responses to social network items at baseline**
+* **n=`r nrow(wform)` withdrawn participants excluded**
+
+### Participant Summaries
+
+```{r}
+table1(~ Npeople + Any_HIV + Any_CJI + Any_ISU +
+         Any_SCH + Any_WRK + Any_PRT, data = plev)
+```
+
+### Network Member Summaries
+
+```{r}
+table1(~ sn_b + sn_c_1 + sn_c_2 + sn_c_3 + sn_f +
+         sn_e_1 + sn_e_2 + sn_e_3 + sn_e_4 + sn_e_5 +
+         sn_a + sn_d + sn_g +
+         sn_h + sn_k + sn_l + sn_m + sn_n, 
+       data = sn_bl)
+```
+
 ## STI
 ```{r}
 DT[bl_sti1a == "No" & is.na(bl_sti2a), bl_sti2a := car::recode(bl_sti2a, "NA='No'")]
