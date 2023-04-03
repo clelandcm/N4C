@@ -2127,8 +2127,8 @@ setDT(pscrn)
 * Do not contact (n=`r sum(pscrn$fu_form3___5 == "Checked")`)     
 
 ```{r, echo=FALSE, results='hide'}
-plist <- merge(n4c[pid %in% Enrolled & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .(pid, bl_date)], 
-               n4c[pid %in% Enrolled & redcap_event_name == "Screen 1 (Arm 1: Screener)", 
+plist <- merge(n4c[pid %in% c(Enrolled, "ELK010297M", "STA031097F") & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .(pid, bl_date)], 
+               n4c[pid %in% c(Enrolled, "ELK010297M", "STA031097F") & redcap_event_name == "Screen 1 (Arm 1: Screener)", 
               .(pid, Race = PHS_cat, Ethnicity = Hispanic, `Assigned Sex at Birth` = scr1_sexbirth, Age = scr1_age, `Age Unit` = "Years")],
               all.x = TRUE, all.y = FALSE, by = "pid")
 
