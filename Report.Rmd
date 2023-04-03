@@ -141,7 +141,7 @@ n4c[, n4c_logicals] <- lapply(n4c[, n4c_logicals], function(x){haven::zap_labels
 n4c[, n4c_numerics] <- lapply(n4c[, n4c_numerics], function(x){haven::zap_labels(x)})
 n4c[, n4c_datevars] <- lapply(n4c[, n4c_datevars], function(x){as.POSIXct(as.vector(x), origin = "1970-01-01")})
 
-n4c <- n4c[pid != "dstest"]
+n4c <- subset(n4c, pid != "dstest")
 
 save(list=c('n4c'), file = "n4c.Rdata")
 ```
