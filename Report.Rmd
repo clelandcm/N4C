@@ -616,7 +616,7 @@ enroll_new[day == Sys.Date(), .(`Cumulative Enrolled`,
 ```
 
 ## By Viral Load
-```{r, fig.asp = 1, out.width = "60%"}
+```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
 enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-06-06"), 1))
 
 setDT(enroll_new_VL)
@@ -640,7 +640,7 @@ ggplot(enroll_new_VL[!is.na(blood_vl_q2),],
        aes(x = bl_date, y = `Cumulative Enrolled`, group = blood_vl_q2, color = blood_vl_q2)) + 
   geom_path() +
   geom_hline(yintercept = 135, color = "black", linetype = "dashed") +
-  geom_label(x = as.Date("2022-02-01"), y = 145, color = "black", aes(label = "n=135 target for each subgroup")) + 
+  geom_label(x = as.Date("2022-02-01"), y = 135, color = "black", size = 3, aes(label = "n=135 target for\neach subgroup")) + 
   scale_y_continuous(limits=c(0,figtop_VL), breaks=seq(0,figtop_VL,15)) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
   ylab("Cumulative Number Enrolled") + xlab("") +
