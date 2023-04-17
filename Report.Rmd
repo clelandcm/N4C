@@ -567,7 +567,7 @@ table1(~ opt_out_reason, data = n4c[!is.na(opt_out_reason),])
 
 # Enrollment
 ## Total
-```{r, fig.asp=1, out.width = "60%"}
+```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
 enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-06-06"), 1))
 
 setDT(enroll_new)
