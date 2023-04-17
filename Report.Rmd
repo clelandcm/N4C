@@ -585,15 +585,18 @@ enroll_new_m <- melt(enroll_new, id.vars = c("day","Row"),
                      variable.name = "type",
                      value.name = "num")
 
-figtop <- ceiling(enroll_new_m[day == Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'), .(max(num))])$V1
+# figtop <- ceiling(enroll_new_m[day == Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'), .(max(num))])$V1
+# while(figtop %% 12 > 0) {figtop <- figtop + 1}
 
-while(figtop %% 12 > 0) {figtop <- figtop + 1}
+figtop <- 270
 
-ggplot(enroll_new_m[day <= Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'),], 
+enroll_new_m[day > Sys.Date() & type == "Cumulative Enrolled", num := NA]
+
+ggplot(enroll_new_m[type %in% c('Cumulative Enrolled','Cumulative Target'),], 
        aes(x = day, y = num, group = type, color = type)) + 
   geom_path() +
-  scale_y_continuous(limits=c(0,figtop), breaks=seq(0,figtop,12)) +
-  scale_x_date(date_breaks = "4 weeks", date_labels = "%b-%d") +
+  scale_y_continuous(limits=c(0,figtop), breaks=seq(0,figtop,15)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
   ylab("Cumulative Number Enrolled") + xlab("") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=6),
@@ -625,15 +628,21 @@ enroll_new_VL[, Row := 1:.N]
 enroll_new_VL[, `Cumulative Enrolled` := cumsum(Enrolled), by = .(blood_vl_q2)]
 enroll_new_VL[, blood_vl_q2 := car::recode(blood_vl_q2, "'No'='Detectable';'Yes'='Undetectable (< 200 copies/mL)'", as.factor = TRUE)]
 
-figtop_VL <- max(enroll_new_VL$`Cumulative Enrolled`)
+# figtop_VL <- max(enroll_new_VL$`Cumulative Enrolled`)
+# 
+# while(figtop_VL %% 12 > 0) {figtop_VL <- figtop_VL + 1}
 
-while(figtop_VL %% 12 > 0) {figtop_VL <- figtop_VL + 1}
+figtop_VL <- 210
 
-ggplot(enroll_new_VL[bl_date <= Sys.Date() & !is.na(blood_vl_q2),], 
+enroll_new_VL[bl_date > Sys.Date(), `Cumulative Enrolled` := NA]
+
+ggplot(enroll_new_VL[!is.na(blood_vl_q2),], 
        aes(x = bl_date, y = `Cumulative Enrolled`, group = blood_vl_q2, color = blood_vl_q2)) + 
   geom_path() +
-  scale_y_continuous(limits=c(0,figtop_VL), breaks=seq(0,figtop_VL,12)) +
-  scale_x_date(date_breaks = "4 weeks", date_labels = "%b-%d") +
+  geom_hline(yintercept = 135, color = "black", linetype = "dashed") +
+  geom_label(x = as.Date("2022-02-01"), y = 145, color = "black", aes(label = "n=135 target for each subgroup")) + 
+  scale_y_continuous(limits=c(0,figtop_VL), breaks=seq(0,figtop_VL,15)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
   ylab("Cumulative Number Enrolled") + xlab("") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=6),
