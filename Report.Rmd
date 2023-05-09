@@ -81,7 +81,7 @@ meta_DT[!is.na(attriblab), attriblab := gsub("<[^>]*>", "", attriblab)]
 meta_DT[!is.na(choices), factlab := gsub("<.*?>", "", factlab)]
 meta_DT[!is.na(attriblab), attriblab := gsub("<.*?>", "", attriblab)]
 
-DT <- REDCapR::redcap_read_oneshot(redcap_uri=uri, raw_or_label = "raw", token=token)$data
+DT <- REDCapR::redcap_read(redcap_uri=uri, raw_or_label = "raw", token=token)$data
 DT_n <- DT
 
 # setDT(DT)
@@ -122,7 +122,7 @@ setDT(DT_n)
 ```
 
 ```{r}
-ds <- REDCapR::redcap_read_oneshot(redcap_uri=uri, raw_or_label = "label", token=token)$data
+ds <- REDCapR::redcap_read(redcap_uri=uri, raw_or_label = "label", token=token)$data
 n4c <- data.table(ds)
 
 n4c_characters <- names(which(unlist(lapply(n4c, function(x){"character" %in% class(x)}))))
