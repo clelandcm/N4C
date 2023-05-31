@@ -2143,8 +2143,6 @@ wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event_name,blood_vl_q2
 setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
                           "Follow Up 1 Interview (Arm 2: Assessments)"),
                   new = c('BL_Undetectable','FU1_Undetectable'))
-
-with(na.omit(wide_VL), table(BL_Undetectable, FU1_Undetectable))
 ```
 
 ```{r, results='asis'}
