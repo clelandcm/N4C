@@ -2131,6 +2131,22 @@ setDT(pscrn)
 ```
 
 # Undetectable Viral Load Over Time
+
+```{r}
+long_VL <- n4c[redcap_event_name %in% c("Baseline Interview (Arm 2: Assessments)",
+                             "Follow Up 1 Interview (Arm 2: Assessments)"),
+    .(pid, redcap_event_name, blood_vl_q2, blood_vl_q3, blood_vl_q4)]
+
+wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event_name,blood_vl_q2)],
+      pid ~ redcap_event_name, value.var = "blood_vl_q2")
+
+setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
+                          "Follow Up 1 Interview (Arm 2: Assessments)"),
+                  new = c('BL_Undetectable','FU1_Undetectable'))
+
+with(na.omit(wide_VL), table(BL_Undetectable, FU1_Undetectable))
+```
+
 ```{r, results='asis'}
 mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
                                        !is.na(FU1_Undetectable),], 
@@ -2164,25 +2180,3 @@ write.csv(plist[order(bl_date), .(pid, `Baseline Date` = bl_date, Race, Ethnicit
 write.csv(plist[order(bl_date), .(pid, `Baseline Date` = bl_date, Race, Ethnicity, `Assigned Sex at Birth`, Sexual_Orientation, Gender_Identity, Age, `Age Unit`)],
           "c:/chuck/NYU/Gwadz/Adolescent Longitudinal/participant-list.csv")
 ```
-
-```{r}
-long_VL <- n4c[redcap_event_name %in% c("Baseline Interview (Arm 2: Assessments)",
-                             "Follow Up 1 Interview (Arm 2: Assessments)"),
-    .(pid, redcap_event_name, blood_vl_q2, blood_vl_q3, blood_vl_q4)]
-
-wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event_name,blood_vl_q2)],
-      pid ~ redcap_event_name, value.var = "blood_vl_q2")
-
-setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
-                          "Follow Up 1 Interview (Arm 2: Assessments)"),
-                  new = c('BL_Undetectable','FU1_Undetectable'))
-
-with(na.omit(wide_VL), table(BL_Undetectable, FU1_Undetectable))
-```
-
-
-
-
-
-
-
