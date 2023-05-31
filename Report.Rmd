@@ -2153,6 +2153,33 @@ write.csv(plist[order(bl_date), .(pid, `Baseline Date` = bl_date, Race, Ethnicit
           "c:/chuck/NYU/Gwadz/Adolescent Longitudinal/participant-list.csv")
 ```
 
+```{r}
+long_VL <- n4c[redcap_event_name %in% c("Baseline Interview (Arm 2: Assessments)",
+                             "Follow Up 1 Interview (Arm 2: Assessments)"),
+    .(pid, redcap_event_name, blood_vl_q2, blood_vl_q3, blood_vl_q4)]
+
+wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event_name,blood_vl_q2)],
+      pid ~ redcap_event_name, value.var = "blood_vl_q2")
+
+setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
+                          "Follow Up 1 Interview (Arm 2: Assessments)"),
+                  new = c('BL_Undetectable','FU1_Undetectable'))
+
+with(na.omit(wide_VL), table(BL_Undetectable, FU1_Undetectable))
+```
+
+# Undetectable Viral Load Over Time
+```{r, results='asis'}
+mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
+                                       !is.na(FU1_Undetectable),], 
+                               row = BL_Undetectable, 
+                               col = FU1_Undetectable,
+                               percent = "cell",
+                               label = list(BL_Undetectable ~ "Undetectable at BL", 
+                                            FU1_Undetectable ~ "Undetectable at 9 Month Follow-Up"))
+print(mytab4)
+```
+
 
 
 
