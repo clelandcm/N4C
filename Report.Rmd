@@ -2130,6 +2130,18 @@ setDT(pscrn_meta)
 setDT(pscrn)
 ```
 
+# Undetectable Viral Load Over Time
+```{r, results='asis'}
+mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
+                                       !is.na(FU1_Undetectable),], 
+                               row = BL_Undetectable, 
+                               col = FU1_Undetectable,
+                               percent = "cell",
+                               label = list(BL_Undetectable ~ "Undetectable at BL", 
+                                            FU1_Undetectable ~ "Undetectable at 9 Month Follow-Up"))
+print(mytab4)
+```
+
 # Prescreening Form (n=`r nrow(pscrn)`)
 * Prescreener completed (n=`r sum(pscrn$fu_form3___1 == "Checked")`)     
 * Refused prescreener (n=`r sum(pscrn$fu_form3___2 == "Checked")`)     
@@ -2168,17 +2180,7 @@ setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
 with(na.omit(wide_VL), table(BL_Undetectable, FU1_Undetectable))
 ```
 
-# Undetectable Viral Load Over Time
-```{r, results='asis'}
-mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
-                                       !is.na(FU1_Undetectable),], 
-                               row = BL_Undetectable, 
-                               col = FU1_Undetectable,
-                               percent = "cell",
-                               label = list(BL_Undetectable ~ "Undetectable at BL", 
-                                            FU1_Undetectable ~ "Undetectable at 9 Month Follow-Up"))
-print(mytab4)
-```
+
 
 
 
