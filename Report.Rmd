@@ -568,7 +568,7 @@ table1(~ opt_out_reason, data = n4c[!is.na(opt_out_reason),])
 # Enrollment
 ## Total
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
-enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-06-06"), 1))
+enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-07-30"), 1))
 
 setDT(enroll_new)
 
@@ -617,7 +617,7 @@ enroll_new[day == Sys.Date(), .(`Cumulative Enrolled`,
 
 ## By Viral Load
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
-enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-06-06"), 1))
+enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-07-30"), 1))
 
 setDT(enroll_new_VL)
 
