@@ -632,7 +632,7 @@ enroll_new_VL[, blood_vl_q2 := car::recode(blood_vl_q2, "'No'='Detectable';'Yes'
 # 
 # while(figtop_VL %% 12 > 0) {figtop_VL <- figtop_VL + 1}
 
-figtop_VL <- 220
+figtop_VL <- 225
 
 enroll_new_VL[bl_date > Sys.Date(), `Cumulative Enrolled` := NA]
 
