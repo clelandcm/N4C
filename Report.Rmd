@@ -2072,11 +2072,20 @@ FUrate <- merge(DT[redcap_event_name == "baseline_interview_arm_2" & is.na(redca
                 DT[redcap_event_name == "follow_up_1_interv_arm_2" & is.na(redcap_repeat_instrument),.(pid, follow_up_1_interview_editing_complete, fu1_date)],
                 all=TRUE)
 
+FUrate <- merge(FUrate, DT[redcap_event_name == "follow_up_2_interv_arm_2" & 
+                             is.na(redcap_repeat_instrument),.(pid, follow_up_2_interview_complete, fu2_date)],
+                all=TRUE)
+
 FUrate[, FU1_Completion := ifelse(!is.na(follow_up_1_interview_editing_complete) & 
                                     follow_up_1_interview_editing_complete == 2, "Yes",
                                   ifelse(Days_Since_BL > 334, "Nine-Month Follow-Up Missed", NA))]
 
+FUrate[, FU2_Completion := ifelse(!is.na(follow_up_2_interview_complete) & 
+                                    follow_up_2_interview_complete == 2, "Yes",
+                                  ifelse(Days_Since_BL > 608, "Eighteen-Month Follow-Up Missed", NA))]
+
 label(FUrate$FU1_Completion) <- "Nine-Month Interview Completed"
+label(FUrate$FU2_Completion) <- "Eighteen-Month Interview Completed"
 ```
 
 ```{r, results='hide'}
@@ -2105,7 +2114,17 @@ table1(~ FU1_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !i
 ```
 
 ## Eighteen Months
+### Interview Completion
 ```{r}
+table1(~ FU2_Completion, data = FUrate[!is.na(FU2_Completion)])
+```
+
+<br>
+
+* n=`r nrow(FUrate[is.na(FU2_Completion) | FU2_Completion != "Yes" & Days_Since_BL <= 608])` pending eighteen-month follow-up interviews
+* n=`r nrow(FUrate[(is.na(FU2_Completion) | FU2_Completion != "Yes") & Days_Since_BL > 608])` missed eighteen-month follow-up interviews
+
+```{r, include=FALSE}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU2_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 548, "FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline")]
 DT[, FU2_Due := factor(FU2_Due, levels = c("FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline"))]
 label(DT$FU2_Due) <- "Second Follow-Up Due"
