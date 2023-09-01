@@ -565,7 +565,7 @@ table1(~ opt_out_reason, data = n4c[!is.na(opt_out_reason),])
 # Enrollment
 ## Total
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
-enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-09-01"), 1))
+enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-10-01"), 1))
 
 setDT(enroll_new)
 
@@ -576,6 +576,7 @@ enroll_new[, Row := 1:.N]
 enroll_new[, Target := 0.4258675]
 enroll_new[, `Cumulative Enrolled` := cumsum(Enrolled)]
 enroll_new[, `Cumulative Target` := cumsum(Target)]
+enroll_new[`Cumulative Target` >= 270, `Cumulative Target` := 270]
 enroll_new[, Deficit := `Cumulative Target` - `Cumulative Enrolled`]
 
 enroll_new_m <- melt(enroll_new, id.vars = c("day","Row"), 
@@ -614,7 +615,7 @@ enroll_new[day == Sys.Date(), .(`Cumulative Enrolled`,
 
 ## By Viral Load
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
-enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-09-01"), 1))
+enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-10-01"), 1))
 
 setDT(enroll_new_VL)
 
@@ -629,7 +630,7 @@ enroll_new_VL[, blood_vl_q2 := car::recode(blood_vl_q2, "'No'='Detectable';'Yes'
 # 
 # while(figtop_VL %% 12 > 0) {figtop_VL <- figtop_VL + 1}
 
-figtop_VL <- 225
+figtop_VL <- 230
 
 enroll_new_VL[bl_date > Sys.Date(), `Cumulative Enrolled` := NA]
 
