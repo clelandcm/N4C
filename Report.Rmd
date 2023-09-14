@@ -721,6 +721,128 @@ table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_e
        data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
+## Multigroup Ethnic Identity
+
+[Phinney, J. S., & Ong, A. D. (2007). Conceptualization and measurement of ethnic identity: Current status and future directions.Journal of Counseling Psychology, 54(3), 271–281. https://doi.org/10.1037/0022-0167.54.3.271](https://psycnet.apa.org/fulltext/2007-09249-006.html)
+
+```{r}
+table1(~ bl_identity1 + bl_identity2 + bl_identity3 + bl_identity4 +
+         bl_identity5 + bl_identity6, 
+       data = DT[pid %in% Enrolled & 
+                 pid != "dstest" &
+                 redcap_event_name == "baseline_interview_arm_2" & 
+                 !is.na(bl_date)])
+```
+
+```{r}
+MEI_m <- melt(DT[pid %in% Enrolled &
+                 pid != "dstest" &   
+                 redcap_event_name == "baseline_interview_arm_2" & 
+                 !is.na(bl_date), 
+   .(pid, bl_identity1,bl_identity2,bl_identity3,
+          bl_identity4,bl_identity5,bl_identity6)],
+   id.vars = "pid", variable.name = "Item", value.name = "Response")
+
+MEI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 1,
+                                Response == "Disagree" ~ 2,
+                                Response == "Neutral" ~ 3,
+                                Response == "Agree" ~ 4,
+                                Response == "Strongly Agree" ~ 5,
+                                TRUE ~ as.integer(NA))]
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(MEI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
+```
+
+## Sexual Orientation Identity
+
+[Toomey, R. B., Anhalt, K., & Shramko, M. (2016). An examination of the validity and reliability of a measure of sexual orientation identity exploration, resolution, and affirmation. Self and Identity, 15(4), 488-504.](https://www.tandfonline.com/doi/full/10.1080/15298868.2016.1157516)
+
+-   Items administered to the subset of participants not reporting a "straight" sexual orientation
+
+```{r}
+table1(~ bl_soidentity1 + bl_soidentity2 + bl_soidentity3 + bl_soidentity4 +
+         bl_soidentity5 + bl_soidentity6, 
+       data = DT[pid %in% Enrolled &
+                 pid != "dstest" &   
+                 redcap_event_name == "baseline_interview_arm_2" & 
+                 !is.na(bl_date)])
+```
+
+```{r}
+SOI_m <- melt(DT[pid %in% Enrolled & 
+                 pid != "dstest" &
+                 redcap_event_name == "baseline_interview_arm_2" & 
+                 !is.na(bl_date), 
+   .(pid, bl_soidentity1,bl_soidentity2,bl_soidentity3,
+          bl_soidentity4,bl_soidentity5,bl_soidentity6)],
+   id.vars = "pid", variable.name = "Item", value.name = "Response")
+
+SOI_m[, Response_n := case_when(Response == "Does not describe me at all" ~ 0,
+                                Response == "Describes me a little" ~ 1,
+                                Response == "Describes me well" ~ 2,
+                                Response == "Describes me very well" ~ 3,
+                                TRUE ~ as.integer(NA))]
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(SOI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
+```
+
+## Genderqueer Identity
+
+[McGuire, J. K., Beek, T. F., Catalpa, J. M., & Steensma, T. D. (2019). The Genderqueer Identity (GQI) Scale: Measurement and validation of four distinct subscales with trans and LGBQ clinical and community samples in two countries. International Journal of Transgenderism, 20(2-3), 289-304.](https://www.tandfonline.com/doi/full/10.1080/15532739.2018.1460735)
+
+-   Items administered to the subset of participants reporting a sex assigned at birth which did not match their current gender identity
+-   One item from each subscale administered
+
+```{r}
+table1(~ bl_gqidentity1 + bl_gqidentity2 + bl_gqidentity3 + bl_gqidentity4, 
+       data = DT[pid %in% Enrolled &
+                 pid != "dstest" &   
+                 redcap_event_name == "baseline_interview_arm_2" & 
+                 !is.na(bl_date)])
+```
+
+```{r}
+GQI_m <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+   .(pid, bl_gqidentity1, bl_gqidentity2, bl_gqidentity3, bl_gqidentity4)],
+   id.vars = "pid", variable.name = "Item", value.name = "Response")
+
+GQI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 0,
+                                Response == "Disagree" ~ 1,
+                                Response == "Neutral" ~ 2,
+                                Response == "Agree" ~ 3,
+                                Response == "Strongly Agree" ~ 4,
+                                TRUE ~ as.integer(NA))]
+```
+
+<br>
+
+Coefficient Alpha
+```{r}
+myalpha <- dcast(GQI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] %>%
+  psych::alpha()
+
+myalpha[1:4] %>% pander()
+```
+
 ## Physical and Mental Health
 ```{r}
 table1(~ bl_health1 + bl_health2, 
