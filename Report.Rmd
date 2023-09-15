@@ -799,7 +799,7 @@ table1(~ bl_identity1 + bl_identity2 + bl_identity3 + bl_identity4 +
        data = DT[pid %in% Enrolled & 
                  pid != "dstest" &
                  redcap_event_name == "baseline_interview_arm_2" & 
-                 !is.na(bl_date)])
+                 !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
@@ -842,7 +842,7 @@ table1(~ bl_soidentity1 + bl_soidentity2 + bl_soidentity3 + bl_soidentity4 +
        data = DT[pid %in% Enrolled &
                  pid != "dstest" &   
                  redcap_event_name == "baseline_interview_arm_2" & 
-                 !is.na(bl_date)])
+                 !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
@@ -884,7 +884,7 @@ table1(~ bl_gqidentity1 + bl_gqidentity2 + bl_gqidentity3 + bl_gqidentity4,
        data = DT[pid %in% Enrolled &
                  pid != "dstest" &   
                  redcap_event_name == "baseline_interview_arm_2" & 
-                 !is.na(bl_date)])
+                 !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
