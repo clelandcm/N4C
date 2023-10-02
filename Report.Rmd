@@ -683,7 +683,7 @@ enroll_new[day == Sys.Date(), .(`Cumulative Enrolled`,
 
 ## By Viral Load
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
-enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-10-01"), 1))
+enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-11-01"), 1))
 
 setDT(enroll_new_VL)
 
