@@ -1725,18 +1725,6 @@ assist[, Not_Low_Risk := factor(Not_Low_Risk, levels = c("Lower Risk","Moderate/
 ```
 
 ```{r}
-DT <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE), 
-                 list(DT, 
-                      assist[, .(Any_Moderate_High_Risk = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)],
-                      assist[Substance != "tob", .(Any_Moderate_High_Risk_NoTOB = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)],
-                      assist[!(Substance %in% c("tob","can","alc")), .(Any_Moderate_High_Risk_NoTOBCANALC = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)]))
-
-label(DT$Any_Moderate_High_Risk) <- "Any Moderate or High Risk Substance Use"
-label(DT$Any_Moderate_High_Risk_NoTOB) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco"
-label(DT$Any_Moderate_High_Risk_NoTOBCANALC) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco, Alcohol, and Cannabis"
-```
-
-```{r}
 assist_wide <- dcast(assist[, .(pid, redcap_event_name, Substance, Risk_Category, Risk_Score, Not_Low_Risk)],
                      pid + redcap_event_name ~ Substance, value.var = c("Risk_Category","Risk_Score","Not_Low_Risk"))
 
@@ -1778,6 +1766,18 @@ label(assist_wide$Not_Low_Risk_hal) <- "Hallucinogens (Ecstasy, LSD, acid, mushr
 label(assist_wide$Not_Low_Risk_sopi) <- "Street opioids (heroin, opium, etc.)"
 label(assist_wide$Not_Low_Risk_popi) <- "Prescription opioids (morphine, codeine, fentanyl, oxycodone [Oxycontin, Percocet], hydrocodone [Vicodin], methadone, buprenorphine [Suboxone], etc.)"
 label(assist_wide$Not_Low_Risk_oth) <- "Other Drugs"
+```
+
+```{r}
+assist_wide <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE), 
+                 list(assist_wide, 
+                      assist[, .(Any_Moderate_High_Risk = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)],
+                      assist[Substance != "tob", .(Any_Moderate_High_Risk_NoTOB = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)],
+                      assist[!(Substance %in% c("tob","can","alc")), .(Any_Moderate_High_Risk_NoTOBCANALC = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid)]))
+
+label(assist_wide$Any_Moderate_High_Risk) <- "Any Moderate or High Risk Substance Use"
+label(assist_wide$Any_Moderate_High_Risk_NoTOB) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco"
+label(assist_wide$Any_Moderate_High_Risk_NoTOBCANALC) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco, Alcohol, and Cannabis"
 ```
 
 ### Lifetime Use
@@ -1823,8 +1823,7 @@ table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Score"
 
 ### Any Moderate or High Risk Substance Use
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),
-                      .SD, .SDcols = names(DT) %like% "Any_Moderate_"])
+table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Any_Moderate_"])
 ```
 
 ```{r}
