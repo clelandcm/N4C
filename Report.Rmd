@@ -2378,19 +2378,22 @@ setDT(pscrn)
 
 ```{r}
 long_VL <- n4c[redcap_event_name %in% c("Baseline Interview (Arm 2: Assessments)",
-                             "Follow Up 1 Interview (Arm 2: Assessments)"),
+                             "Follow Up 1 Interview (Arm 2: Assessments)",
+                             "Follow Up 2 Interview (Arm 2: Assessments)"),
     .(pid, redcap_event_name, blood_vl_q2, blood_vl_q3, blood_vl_q4)]
 
 wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event_name,blood_vl_q2)],
       pid ~ redcap_event_name, value.var = "blood_vl_q2")
 
 setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
-                          "Follow Up 1 Interview (Arm 2: Assessments)"),
-                  new = c('BL_Undetectable','FU1_Undetectable'))
+                          "Follow Up 1 Interview (Arm 2: Assessments)",
+                          "Follow Up 2 Interview (Arm 2: Assessments)"),
+                  new = c('BL_Undetectable','FU1_Undetectable','FU2_Undetectable'))
 ```
 
-```{r, results='asis'}
-mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
+```{r, results='asis', eval=FALSE}
+mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
+                                       !is.na(BL_Undetectable) &
                                        !is.na(FU1_Undetectable),], 
                                row = BL_Undetectable, 
                                col = FU1_Undetectable,
@@ -2399,6 +2402,43 @@ mytab4 <- gtsummary::tbl_cross(wide_VL[!is.na(BL_Undetectable) &
                                             FU1_Undetectable ~ "Undetectable at 9 Month Follow-Up"))
 print(mytab4)
 ```
+
+```{r}
+change_VL_status <- wide_VL[pid %in% Enrolled &
+        (!is.na(FU1_Undetectable) & FU1_Undetectable != BL_Undetectable) |
+        (!is.na(FU2_Undetectable) & FU2_Undetectable != BL_Undetectable) |
+        (!is.na(FU1_Undetectable) & !is.na(FU2_Undetectable) & FU1_Undetectable != FU2_Undetectable),]
+```
+
+```{r}
+library(gtsummary)
+
+wide_VL[, BL_Undetectable := dplyr::case_when(BL_Undetectable == "Yes" ~ "Undetectable at BL (n=222)",
+                                              BL_Undetectable == "No" ~ "Detectable at BL (n=52)")]
+
+wide_VL[, FU1_Undetectable := dplyr::case_when(FU1_Undetectable == "Yes" ~ "Undetectable at 9M",
+                                               FU1_Undetectable == "No" ~ "Detectable at 9M")]
+
+wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == "Yes" ~ "Undetectable at 18M",
+                                               FU2_Undetectable == "No" ~ "Detectable at 18M")]
+```
+
+```{r, results='asis'}
+mytab4 <- wide_VL[pid %in% Enrolled,] |> 
+  tbl_strata(
+    strata = BL_Undetectable,
+    .tbl_fun =
+      ~ .x %>%
+      tbl_cross(FU1_Undetectable, FU2_Undetectable, margin = NULL,
+                percent = "cell",
+                label = list(FU1_Undetectable ~ "9 Month Follow-Up",
+                             FU2_Undetectable ~ "18 Month Follow-Up")) 
+  )
+
+print(mytab4)
+```
+
+-   n=`r nrow(change_VL_status)` participants have had a change in suppression over time
 
 # Prescreening Form (n=`r nrow(pscrn)`)
 * Prescreener completed (n=`r sum(pscrn$fu_form3___1 == "Checked")`)     
