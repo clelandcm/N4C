@@ -317,7 +317,8 @@ Eligible <- na.omit(DT$pid[DT$scr2_eligibility == "Eligible"])
 Enrolled <- na.omit(DT$pid[DT$baseline_consent_form_complete == 2])
 ```
 
-# Withdrawals 
+# Withdrawals
+
 ```{r}
 rcon <- redcapAPI::redcapConnection(url = 'https://redcap.nyu.edu/api/', token=token)
 wform <- redcapAPI::exportRecordsTyped(rcon, batch.size = 700, 
@@ -347,9 +348,9 @@ table1(~ withdrawal_form, data = wform)
 
 <br>
 
-* **n=`r nrow(wform)`** withdrawals from study     
-* **n=`r sum(!(Enrolled %in% wform$pid))`** enrolled participants remaining after withdrawals     
-* withdrawn participants are not included in summaries of baseline and follow-ups
+-   **n=`r nrow(wform)`** withdrawals from study\
+-   **n=`r sum(!(Enrolled %in% wform$pid))`** enrolled participants remaining after withdrawals\
+-   withdrawn participants are not included in summaries of baseline and follow-ups
 
 ```{r, echo=FALSE}
 Not_Withdrawn <- setdiff(Enrolled, wform$pid)
@@ -424,6 +425,7 @@ my.render <- function(x, name, missing = any(is.na(x)), transpose = F, render.em
 ```
 
 # Screen 1
+
 ```{r}
 table1(~ scr1_contact_form + scr1_recruit + scr1_recruit_social + scr1_consent +
          scr1_age + scr1_residence + scr1_lang + scr1_pronouns + scr1_sexbirth + 
@@ -433,6 +435,7 @@ table1(~ scr1_contact_form + scr1_recruit + scr1_recruit_social + scr1_consent +
 ```
 
 ## Gender Identity
+
 ```{r}
 label(n4c$scr1_gidentity___1) <- "Man, male" 
 label(n4c$scr1_gidentity___2) <- "Woman, female"
@@ -482,8 +485,8 @@ label(gendID_m$Gender_Identity) <- "Gender Identity"
 table1::table1(~ Gender_Identity, data = gendID_m)
 ```
 
-
 ## Sexual Orientation
+
 ```{r}
 label(n4c$scr1_sidentity1___1) <- "Gay"
 label(n4c$scr1_sidentity1___2) <- "Lesbian"
@@ -543,6 +546,7 @@ table1::table1(~ Sexual_Orientation, data = sexor_m)
 ```
 
 ## Race/Ethnicity
+
 ```{r}
 label(n4c$scr1_ethnicity) <- "Do you consider yourself Hispanic or Latino/a/x?"
 label(n4c$scr1_race___1) <- "Black or African American" 
@@ -560,6 +564,7 @@ table1(~ ., data = n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .SD, .
 ```
 
 ### PHS Categories
+
 ```{r}
 n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", Hispanic := car::recode(scr1_ethnicity, "'No'='Not Hispanic or Latino';'Yes'='Hispanic or Latino';else='Unknown/Not Reported Ethnicity'", as.factor = TRUE)]
 n4c[, Hispanic := ordered(Hispanic, levels = c('Not Hispanic or Latino','Hispanic or Latino','Unknown/Not Reported Ethnicity'))]
@@ -612,6 +617,7 @@ with(demog,
 ```
 
 # Screen 2
+
 ```{r}
 label(n4c$scr2_eligibility) <- "Is the participant preliminarily eligible?"
 label(n4c$scr2_status) <- "Enter the documentation of HIV status provided"
@@ -623,6 +629,7 @@ table1(~ scr2_status + scr2_docs + scr2_phone + scr2_eligibility + screener_2_co
 ```
 
 ## Opt Out
+
 ```{r}
 label(n4c$opt_out_reason) <- "Participation has concluded/opted-out of participation due to:"
 
@@ -630,7 +637,9 @@ table1(~ opt_out_reason, data = n4c[!is.na(opt_out_reason),])
 ```
 
 # Enrollment
+
 ## Total
+
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
 enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-11-01"), 1))
 
@@ -681,6 +690,7 @@ enroll_new[day == as.Date("2023-11-01"), .(`Cumulative Enrolled`,
 ```
 
 ## By Viral Load
+
 ```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
 enroll_new_VL <- expand.grid(blood_vl_q2 = c("No","Yes"), bl_date = seq(as.Date("2021-12-07"), as.Date("2023-11-01"), 1))
 
@@ -727,13 +737,16 @@ enroll_new_VL[bl_date == as.Date("2023-11-01"), .(`Viral Load` = blood_vl_q2, `C
 # Baseline Interview
 
 ## Demographics (Baseline Sample)
+
 ### Age, Sex at Birth, and Race/Ethnicity
+
 ```{r}
 table1(~ ., data = n4c[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)] & 
                          redcap_event_name == "Screen 1 (Arm 1: Screener)", .SD, .SDcols = names(n4c) %like% "scr1_sexbirth$|^scr1_ethnicity|^scr1_race___|scr1_age"])
 ```
 
 ### PHS Categories
+
 ```{r, results='asis'}
 mytab2 <- gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date)], row = PHS_cat, col = Hispanic)
 print(mytab2)
@@ -751,16 +764,19 @@ with(demog[Enrolled == TRUE & !is.na(bl_date)],
 ```
 
 ### Gender Identity
+
 ```{r}
 table1(~ Gender_Identity, data = gendID_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual Identity
+
 ```{r}
 table1(~ Sexual_Orientation, data = sexor_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual or Gender Minority
+
 ```{r}
 sexmin <- merge(gendID_m, sexor_m, all = TRUE)
 sexmin <- merge(sexmin, n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", 
@@ -781,6 +797,7 @@ print(mytab9)
 ```
 
 ### Other Demographics
+
 ```{r}
 label(DT$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
 
@@ -790,7 +807,7 @@ table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_e
 
 ## Multigroup Ethnic Identity
 
-[Phinney, J. S., & Ong, A. D. (2007). Conceptualization and measurement of ethnic identity: Current status and future directions.Journal of Counseling Psychology, 54(3), 271–281. https://doi.org/10.1037/0022-0167.54.3.271](https://psycnet.apa.org/fulltext/2007-09249-006.html)
+[Phinney, J. S., & Ong, A. D. (2007). Conceptualization and measurement of ethnic identity: Current status and future directions.Journal of Counseling Psychology, 54(3), 271--281. https://doi.org/10.1037/0022-0167.54.3.271](https://psycnet.apa.org/fulltext/2007-09249-006.html)
 
 ```{r}
 table1(~ bl_identity1 + bl_identity2 + bl_identity3 + bl_identity4 +
@@ -821,6 +838,7 @@ MEI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 1,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(MEI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -863,6 +881,7 @@ SOI_m[, Response_n := case_when(Response == "Does not describe me at all" ~ 0,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(SOI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -902,6 +921,7 @@ GQI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 0,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(GQI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -911,12 +931,14 @@ myalpha[1:4] %>% pander()
 ```
 
 ## Physical and Mental Health
+
 ```{r}
 table1(~ bl_health1 + bl_health2, 
        data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Diagnosis
+
 ```{r}
 HIVdx <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr1_age)],
                n4c[pid %in% Enrolled & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), 
@@ -937,7 +959,9 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 ```
 
 ## ART
+
 ### Recent
+
 ```{r}
 DT[bl_artvas2 == "No" & is.na(bl_artvas3), bl_artvas3 := 0]
 
@@ -946,6 +970,7 @@ table1(~ bl_artvas2 + bl_artvas3,
 ```
 
 ### History/Current Regimen
+
 ```{r}
 label(DT$bl_art2) <- "How many months had passed between the time you were first diagnosed with HIV and the first time you took HIV medication?"
 label(DT$bl_art4) <- "How many different times have you stopped taking HIV medication for at least two days, then started again?"
@@ -955,6 +980,7 @@ table1(~ bl_art1 + bl_art_inj1 + bl_art2 + bl_art3 + bl_art4 + bl_art5,
 ```
 
 ## HIV Care
+
 ```{r}
 DT[bl_hivcare == "No" & is.na(bl_hivcare6), bl_hivcare6 := 0]
 label(DT$bl_hivcare7) <- "In the past year, how many appointments with your HIV health care provider have you missed without cancelling in advance?"
@@ -965,12 +991,14 @@ table1(~ bl_hivcare + bl_hivcare1 + bl_hivcare3 + bl_hivcare4 + bl_hivcare6 + bl
 ```
 
 ## Reasons for sometimes stopping or discontinuing ART
+
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "Yes" & bl_art4 > 0, 
                       .SD, .SDcols = names(n4c) %like% "bl_stopart\\d+$"])
 ```
 
 ## Reasons for never taking ART
+
 ```{r, eval = any(!is.na(DT$bl_art1) & DT$bl_art1 == "No")}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "No", 
                       .SD, .SDcols = names(n4c) %like% "bl_neverart\\d+$"])
@@ -1042,6 +1070,7 @@ table1(~ `Social Support Total`,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(socsup_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -1081,6 +1110,7 @@ table1(~ `Everyday Discrimination Total`,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(edd_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -1118,6 +1148,7 @@ table1(~ `HIV Stigma Total`,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(stig_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -1128,13 +1159,14 @@ myalpha[1:4] %>% pander()
 
 ## Client Engagement in HIV Care
 
-[Yatchmenoff, D. K. (2005). Measuring client engagement from the client’s perspective in nonvoluntary child protective services. Research on social work practice, 15(2), 84-96.](https://journals.sagepub.com/doi/abs/10.1177/1049731504271605)
+[Yatchmenoff, D. K. (2005). Measuring client engagement from the client's perspective in nonvoluntary child protective services. Research on social work practice, 15(2), 84-96.](https://journals.sagepub.com/doi/abs/10.1177/1049731504271605)
 
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_clientcare\\d"])
 ```
 
 ## HIV Care Satisfaction
+
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_spns\\d"])
 ```
@@ -1178,6 +1210,7 @@ table1(~ `Trust in Provider Total (0-44)`,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(tprov_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] %>%
@@ -1227,6 +1260,7 @@ table1(~ `Overall ART Outcome Expectancy (1-10)`,
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
               .SD, .SDcols = names(n4c) %like% "bl_artoutcome1"] %>%
@@ -1286,6 +1320,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 <br>
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
               .SD, .SDcols = names(n4c) %like% "bl_artadh\\d+$"] %>%
@@ -1293,7 +1328,6 @@ myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2
 
 myalpha[1:3] %>% pander()
 ```
-
 
 ## ACES
 
@@ -1409,8 +1443,8 @@ label(plev$Any_WRK) <- "Any Network Members Working a Job on the Books"
 label(plev$Any_PRT) <- "Any Network Members Who Are Romantic or Sex Partner"
 ```
 
-* **n=`r length(setdiff(Enrolled, sn_bl$pid))` enrolled participants without responses to social network items at baseline**
-* **n=`r nrow(wform)` withdrawn participants excluded**
+-   **n=`r length(setdiff(Enrolled, sn_bl$pid))` enrolled participants without responses to social network items at baseline**
+-   **n=`r nrow(wform)` withdrawn participants excluded**
 
 ### Participant Summaries
 
@@ -1430,6 +1464,7 @@ table1(~ sn_b + sn_c_1 + sn_c_2 + sn_c_3 + sn_f +
 ```
 
 ## STI
+
 ```{r}
 DT[bl_sti1a == "No" & is.na(bl_sti2a), bl_sti2a := car::recode(bl_sti2a, "NA='No'")]
 DT[bl_sti1b == "No" & is.na(bl_sti2b), bl_sti2b := car::recode(bl_sti2b, "NA='No'")]
@@ -1443,6 +1478,7 @@ DT[bl_sti1i == "No" & is.na(bl_sti2i), bl_sti2i := car::recode(bl_sti2i, "NA='No
 ```
 
 ### Lifetime
+
 ```{r}
 table1(~ bl_sti1a + bl_sti1b + bl_sti1c + bl_sti1d + bl_sti1e +
          bl_sti1f + bl_sti1g + bl_sti1h + bl_sti1i,
@@ -1450,6 +1486,7 @@ table1(~ bl_sti1a + bl_sti1b + bl_sti1c + bl_sti1d + bl_sti1e +
 ```
 
 ### Past Year
+
 ```{r}
 table1(~ bl_sti2a + bl_sti2b + bl_sti2c + bl_sti2d + bl_sti2e +
          bl_sti2f + bl_sti2g + bl_sti2h + bl_sti2i,
@@ -1458,11 +1495,11 @@ table1(~ bl_sti2a + bl_sti2b + bl_sti2c + bl_sti2d + bl_sti2e +
 
 ## WHO Assist
 
-* WHO ASSIST Working Group (2002). The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): development, reliability and feasibility. _Addiction_, 97 (9): 1183-1194.
+-   WHO ASSIST Working Group (2002). The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): development, reliability and feasibility. *Addiction*, 97 (9): 1183-1194.
 
-* Humeniuk RE, Ali RA, Babor TF, Farrell M, Formigoni ML, Jittiwutikarn J, Boerngen de Larcerda R, Ling W, Marsden J, Monteiro M, Nhiwhatiwa S, Pal H, Poznyak V & Simon S (2008). Validation of the Alcohol Smoking and Substance Involvement Screening Test (ASSIST). _Addiction_ 103(6): 1039-1047.
+-   Humeniuk RE, Ali RA, Babor TF, Farrell M, Formigoni ML, Jittiwutikarn J, Boerngen de Larcerda R, Ling W, Marsden J, Monteiro M, Nhiwhatiwa S, Pal H, Poznyak V & Simon S (2008). Validation of the Alcohol Smoking and Substance Involvement Screening Test (ASSIST). *Addiction* 103(6): 1039-1047.
 
-* Humeniuk RE, Henry-Edwards S, Ali RL, Poznyak V and Monteiro M (2010). _The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): manual for use in primary care_. Geneva, World Health Organization.
+-   Humeniuk RE, Henry-Edwards S, Ali RL, Poznyak V and Monteiro M (2010). *The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): manual for use in primary care*. Geneva, World Health Organization.
 
 ```{r}
 assist_Q1_cols <- c("pid", "redcap_event_name", "bl_whoassist1a", "bl_whoassist1b", "bl_whoassist1c",
@@ -1780,12 +1817,14 @@ label(assist_wide$Any_Moderate_High_Risk_NoTOBCANALC) <- "Any Moderate or High R
 ```
 
 ### Lifetime Use
+
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "^bl_whoassist1[a-l]$"])
 ```
 
 ### Frequency of Use in the Past Three Months
+
 ```{r}
 assist[, Use_P3M := ordered(Use_P3M, levels = c("Never: not used in the last 3 months",
                                                 "Once or Twice: 1 to 2 times in the past 3 months",
@@ -1806,21 +1845,25 @@ print(mytab3)
 ```
 
 ### Risk Categories
+
 ```{r}
 table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Category"])
 ```
 
 ### Not Lower Risk
+
 ```{r}
 table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Not_Low_Risk"])
 ```
 
 ### Risk Scores
+
 ```{r}
 table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Score"])
 ```
 
 ### Any Moderate or High Risk Substance Use
+
 ```{r}
 table1(~ ., data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Any_Moderate_"])
 ```
@@ -1830,6 +1873,7 @@ save(list=c('assist','assist_wide'), file = "whorisk.Rdata")
 ```
 
 ## PrEP
+
 ```{r}
 label(DT$bl_prep1) <- "Before today, have you ever heard of people regularly taking anti-HIV medicines BEFORE a sexual or drug use exposure, to reduce the risk of getting HIV?"
 
@@ -1838,6 +1882,7 @@ table1(~ bl_prep1 + bl_prep2,
 ```
 
 ## Substance Use and Mental Health Treatment
+
 ### Substance Use
 
 ```{r}
@@ -1859,6 +1904,7 @@ DT[bl_sumhtx15 == "No" & is.na(bl_sumhtx30), bl_sumhtx30 := car::recode(bl_sumht
 ```
 
 #### Lifetime
+
 ```{r}
 table1(~ bl_sumhtx1 + bl_sumhtx2 + bl_sumhtx3 + bl_sumhtx4 + bl_sumhtx5 +
          bl_sumhtx6 + bl_sumhtx7 + bl_sumhtx8 + bl_sumhtx9 + bl_sumhtx10, 
@@ -1866,6 +1912,7 @@ table1(~ bl_sumhtx1 + bl_sumhtx2 + bl_sumhtx3 + bl_sumhtx4 + bl_sumhtx5 +
 ```
 
 #### Past Six Months
+
 ```{r}
 table1(~ bl_sumhtx16 + bl_sumhtx17 + bl_sumhtx18 + bl_sumhtx19 + bl_sumhtx20 +
          bl_sumhtx21 + bl_sumhtx22 + bl_sumhtx23 + bl_sumhtx24 + bl_sumhtx25, 
@@ -1873,13 +1920,16 @@ table1(~ bl_sumhtx16 + bl_sumhtx17 + bl_sumhtx18 + bl_sumhtx19 + bl_sumhtx20 +
 ```
 
 ### Mental Health
+
 #### Lifetime
+
 ```{r}
 table1(~ bl_sumhtx11 + bl_sumhtx12 + bl_sumhtx13 + bl_sumhtx14 + bl_sumhtx15, 
        data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 #### Past Six Months
+
 ```{r}
 table1(~ bl_sumhtx26 + bl_sumhtx27 + bl_sumhtx28 + bl_sumhtx29 + bl_sumhtx30, 
        data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
@@ -1905,6 +1955,7 @@ table1(~ `PHQ8 Total Score`, data = phq_m[, .(`PHQ8 Total Score` = if (all(NMISS
 ```
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(phq_m, pid ~ variable, value.var = "value") %>%
   .[, pid := NULL] %>%
@@ -1923,6 +1974,7 @@ table1(~ bl_ptsd1 + bl_ptsd2 + bl_ptsd3 + bl_ptsd4 + ptsdscore,
 ```
 
 ## Resilience
+
 ```{r}
 resil <- DT_n[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT_n) %like% "pid|bl_resilience\\d+$"]
 resil_m <- melt(resil, id.vars ="pid")
@@ -1946,6 +1998,7 @@ table1(~ ., data = resil[, .SD, .SDcols = !(names(resil) %like% "pid")])
 ```
 
 Coefficient Alpha
+
 ```{r}
 myalpha <- dcast(resil_m, pid ~ variable, value.var = "value") %>%
   .[, pid := NULL] %>%
@@ -1955,18 +2008,23 @@ myalpha[1:4] %>% pander()
 ```
 
 # SU Screening
+
 ## Acceptance of Screening
+
 ```{r}
 table1(~ drug_accept_test, data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Substances Detected
+
 ### First Sample
+
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_accept_test == "Yes (Accepted)", .SD, .SDcols = names(DT) %like% "^drug_sample1_test"])
 ```
 
 ### Second Sample
+
 ```{r, eval = any(!is.na(n4c$drug_sample2) & n4c$drug_sample2 == "Yes")}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_sample2 == "Yes", .SD, .SDcols = names(n4c) %like% "^drug_sample2_test"])
 ```
@@ -1978,14 +2036,15 @@ cat("No second drug samples tested as of", format(Sys.Date(), "%B %d, %Y"))
 # EMA
 
 ## Timing of EMA Bursts 1-8
-* The earliest **first** burst of EMA will begin on `r format(min(n4c$ema_startburst1, na.rm=TRUE), "%A, %B %d, %Y")` 
-* The earliest **second** burst of EMA will begin on `r format(min(n4c$ema_startburst2, na.rm=TRUE), "%A, %B %d, %Y")` 
-* The earliest **third** burst of EMA will begin on `r format(min(n4c$ema_startburst3, na.rm=TRUE), "%A, %B %d, %Y")`
-* The earliest **fourth** burst of EMA will begin on `r format(min(n4c$ema_startburst4, na.rm=TRUE), "%A, %B %d, %Y")`
-* The earliest **fifth** burst of EMA will begin on `r format(min(n4c$ema_startburst5, na.rm=TRUE), "%A, %B %d, %Y")`
-* The earliest **sixth** burst of EMA will begin on `r format(min(n4c$ema_startburst6, na.rm=TRUE), "%A, %B %d, %Y")`
-* The earliest **seventh** burst of EMA will begin on `r format(min(n4c$ema_startburst7, na.rm=TRUE), "%A, %B %d, %Y")`
-* The earliest **eighth** burst of EMA will begin on `r format(min(n4c$ema_startburst8, na.rm=TRUE), "%A, %B %d, %Y")`
+
+-   The earliest **first** burst of EMA will begin on `r format(min(n4c$ema_startburst1, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **second** burst of EMA will begin on `r format(min(n4c$ema_startburst2, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **third** burst of EMA will begin on `r format(min(n4c$ema_startburst3, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **fourth** burst of EMA will begin on `r format(min(n4c$ema_startburst4, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **fifth** burst of EMA will begin on `r format(min(n4c$ema_startburst5, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **sixth** burst of EMA will begin on `r format(min(n4c$ema_startburst6, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **seventh** burst of EMA will begin on `r format(min(n4c$ema_startburst7, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **eighth** burst of EMA will begin on `r format(min(n4c$ema_startburst8, na.rm=TRUE), "%A, %B %d, %Y")`
 
 ```{r}
 ema_melt <- melt(n4c[redcap_event_name == "EMA form (Arm 3: EMA Arm)",.SD, 
@@ -2115,15 +2174,17 @@ EMA_all <- merge(EMA_all, ema_EOD,
 
 ## Responses To EMA Prompts
 
-* A total of **n=`r nrow(EMA_all)`** EMA prompts have been sent as of the day before this report was generated and **n=`r nrow(EMA_all[!is.na(EMA_time)])`** of those prompts received responses (`r round(nrow(EMA_all[!is.na(EMA_time)]) / nrow(EMA_all) * 100, 1)`% of all prompts)
+-   A total of **n=`r nrow(EMA_all)`** EMA prompts have been sent as of the day before this report was generated and **n=`r nrow(EMA_all[!is.na(EMA_time)])`** of those prompts received responses (`r round(nrow(EMA_all[!is.na(EMA_time)]) / nrow(EMA_all) * 100, 1)`% of all prompts)
 
 ### Responses Received By EMA Event
+
 ```{r}
 table1(~ Responded | EMA_event, 
        data = EMA_all[, .(Responded = !is.na(EMA_time)), by = .(EMA_event, Day, Burst)], overall = FALSE)
 ```
 
 ### Responses Received By EMA Day Within Burst
+
 ```{r}
 table1(~ Responded | Day, 
        data = EMA_all[, .(Responded = !is.na(EMA_time)), 
@@ -2131,6 +2192,7 @@ table1(~ Responded | Day,
 ```
 
 ### Responses Received By Burst
+
 ```{r}
 table1(~ Responded | Burst, 
        data = EMA_all[, .(Responded = !is.na(EMA_time)), 
@@ -2138,12 +2200,12 @@ table1(~ Responded | Burst,
 ```
 
 ### Responses To All EMA Prompts
+
 ```{r}
 table1(~ Responded, 
        data = EMA_all[, .(Responded = !is.na(EMA_time)), 
                       by = .(EMA_event, Day, Burst)])
 ```
-
 
 ```{r, eval=FALSE}
 ## Number of Non-Missing EMA Items
@@ -2159,7 +2221,9 @@ ema_EOD[, .(Non_Missing_Items = sum(!is.na(.SD))),
 ```
 
 ## Item Summaries
+
 ### Daily
+
 ```{r}
 EMA_daily <- na.omit(n4c[, .(v1_ema_q1, v1_ema_q3, v1_ema_q4, v1_ema_q5, v1_ema_q6,
                              v1_ema_q2___1, v1_ema_q2___2, v1_ema_q2___3, v1_ema_q2___4,
@@ -2193,6 +2257,7 @@ table1(~ ., data = EMA_daily)
 ```
 
 ### End of the Day
+
 ```{r}
 EMA_eod <- na.omit(n4c[, .(v1_ema4_q1, v1_ema4_q3, v1_ema4_q4, v1_ema4_q5, v1_ema4_q6, v1_ema4_q7,
                            v1_ema4_q2___1, v1_ema4_q2___2, v1_ema4_q2___3, v1_ema4_q2___4,
@@ -2281,6 +2346,7 @@ table1(~ ., data = n4c[v1_ema4_q7 == "No" | v1_ema4_q9_v2 == "None of my doses",
 <br>
 
 # Follow-Up
+
 ```{r}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
    Days_Since_BL := as.numeric(difftime(Sys.Date(), bl_date, units = "days"))]
@@ -2320,15 +2386,17 @@ table(DT$pid[DT$redcap_event_name == "baseline_interview_arm_2" & !is.na(DT$bl_d
 ```
 
 ## Nine Months
+
 ### Interview Completion
+
 ```{r}
 table1(~ FU1_Completion, data = FUrate[!is.na(FU1_Completion)])
 ```
 
 <br>
 
-* n=`r nrow(FUrate[is.na(FU1_Completion) | FU1_Completion != "Yes" & Days_Since_BL <= 334])` pending nine-month follow-up interviews
-* n=`r nrow(FUrate[(is.na(FU1_Completion) | FU1_Completion != "Yes") & Days_Since_BL > 334])` missed nine-month follow-up interviews
+-   n=`r nrow(FUrate[is.na(FU1_Completion) | FU1_Completion != "Yes" & Days_Since_BL <= 334])` pending nine-month follow-up interviews
+-   n=`r nrow(FUrate[(is.na(FU1_Completion) | FU1_Completion != "Yes") & Days_Since_BL > 334])` missed nine-month follow-up interviews
 
 ```{r, include=FALSE}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU1_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 274, "FU1 Not Due Yet", "FU1 Due, 274+ Days Since Baseline")]
@@ -2339,15 +2407,17 @@ table1(~ FU1_Due, data = DT[redcap_event_name == "baseline_interview_arm_2" & !i
 ```
 
 ## Eighteen Months
+
 ### Interview Completion
+
 ```{r}
 table1(~ FU2_Completion, data = FUrate[!is.na(FU2_Completion)])
 ```
 
 <br>
 
-* n=`r nrow(FUrate[is.na(FU2_Completion) | FU2_Completion != "Yes" & Days_Since_BL <= 608])` pending eighteen-month follow-up interviews
-* n=`r nrow(FUrate[(is.na(FU2_Completion) | FU2_Completion != "Yes") & Days_Since_BL > 608])` missed eighteen-month follow-up interviews
+-   n=`r nrow(FUrate[is.na(FU2_Completion) | FU2_Completion != "Yes" & Days_Since_BL <= 608])` pending eighteen-month follow-up interviews
+-   n=`r nrow(FUrate[(is.na(FU2_Completion) | FU2_Completion != "Yes") & Days_Since_BL > 608])` missed eighteen-month follow-up interviews
 
 ```{r, include=FALSE}
 DT[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), FU2_Due := ifelse(difftime(Sys.Date(), bl_date, units = "days") < 548, "FU2 Not Due Yet", "FU2 Due, 548+ Days Since Baseline")]
@@ -2374,7 +2444,7 @@ setDT(pscrn_meta)
 setDT(pscrn)
 ```
 
-# Undetectable Viral Load Over Time
+# Suppressed Viral Load Over Time
 
 ```{r}
 long_VL <- n4c[redcap_event_name %in% c("Baseline Interview (Arm 2: Assessments)",
@@ -2391,7 +2461,8 @@ setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
                   new = c('BL_Undetectable','FU1_Undetectable','FU2_Undetectable'))
 ```
 
-## Viral Load < 200 copies/mL at Baseline (n=222)
+## Viral Load $\lt$ 200 copies/mL at Baseline (n=222)
+
 ```{r, results='asis'}
 mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
                                        !is.na(BL_Undetectable) &
@@ -2399,12 +2470,13 @@ mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled &
                                row = FU1_Undetectable, 
                                col = FU2_Undetectable,
                                percent = "cell",
-                               label = list(FU1_Undetectable ~ "Undetectable at 9M", 
-                                            FU2_Undetectable ~ "Undetectable at 18M"))
+                               label = list(FU1_Undetectable ~ "Suppressed at 9M", 
+                                            FU2_Undetectable ~ "Suppressed at 18M"))
 print(mytab4)
 ```
 
-## Viral Load $>=$ 200 copies/mL at Baseline (n=52)
+## Viral Load $\ge$ 200 copies/mL at Baseline (n=52)
+
 ```{r, results='asis'}
 mytab5 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
                                        !is.na(BL_Undetectable) &
@@ -2412,8 +2484,8 @@ mytab5 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled &
                                row = FU1_Undetectable, 
                                col = FU2_Undetectable,
                                percent = "cell",
-                               label = list(FU1_Undetectable ~ "Undetectable at 9M", 
-                                            FU2_Undetectable ~ "Undetectable at 18M"))
+                               label = list(FU1_Undetectable ~ "Suppressed at 9M", 
+                                            FU2_Undetectable ~ "Suppressed at 18M"))
 print(mytab5)
 ```
 
@@ -2427,14 +2499,14 @@ change_VL_status <- wide_VL[pid %in% Enrolled &
 ```{r}
 library(gtsummary)
 
-wide_VL[, BL_Undetectable := dplyr::case_when(BL_Undetectable == "Yes" ~ "Undetectable at BL (n=222)",
-                                              BL_Undetectable == "No" ~ "Detectable at BL (n=52)")]
+wide_VL[, BL_Undetectable := dplyr::case_when(BL_Undetectable == "Yes" ~ "Suppressed at BL (n=222)",
+                                              BL_Undetectable == "No" ~ "Not Suppressed at BL (n=52)")]
 
-wide_VL[, FU1_Undetectable := dplyr::case_when(FU1_Undetectable == "Yes" ~ "Undetectable at 9M",
-                                               FU1_Undetectable == "No" ~ "Detectable at 9M")]
+wide_VL[, FU1_Undetectable := dplyr::case_when(FU1_Undetectable == "Yes" ~ "Suppressed at 9M",
+                                               FU1_Undetectable == "No" ~ "Not Suppressed at 9M")]
 
-wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == "Yes" ~ "Undetectable at 18M",
-                                               FU2_Undetectable == "No" ~ "Detectable at 18M")]
+wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == "Yes" ~ "Suppressed at 18M",
+                                               FU2_Undetectable == "No" ~ "Not Suppressed at 18M")]
 ```
 
 ```{r, results='asis', eval=FALSE}
@@ -2453,13 +2525,16 @@ print(mytab4)
 ```
 
 -   n=`r nrow(change_VL_status)` participants had a change in HIV viral load suppression over time
+    -   n=`r nrow(change_VL_status[BL_Undetectable == "Yes",])` participants who were enrolled with $\lt$ 200 copies/mL became unsuppressed
+    -   n=`r nrow(change_VL_status[BL_Undetectable == "No",])` participants who were enrolled with $\ge$ 200 copies/mL became suppressed
 
 # Prescreening Form (n=`r nrow(pscrn)`)
-* Prescreener completed (n=`r sum(pscrn$fu_form3___1 == "Checked")`)     
-* Refused prescreener (n=`r sum(pscrn$fu_form3___2 == "Checked")`)     
-* Recruiter only (n=`r sum(pscrn$fu_form3___3 == "Checked")`)     
-* Needs additional contact info (n=`r sum(pscrn$fu_form3___4 == "Checked")`)     
-* Do not contact (n=`r sum(pscrn$fu_form3___5 == "Checked")`)     
+
+-   Prescreener completed (n=`r sum(pscrn$fu_form3___1 == "Checked")`)\
+-   Refused prescreener (n=`r sum(pscrn$fu_form3___2 == "Checked")`)\
+-   Recruiter only (n=`r sum(pscrn$fu_form3___3 == "Checked")`)\
+-   Needs additional contact info (n=`r sum(pscrn$fu_form3___4 == "Checked")`)\
+-   Do not contact (n=`r sum(pscrn$fu_form3___5 == "Checked")`)
 
 ```{r, echo=FALSE, results='hide'}
 plist <- merge(n4c[pid %in% c(Enrolled, "ELK010297M", "STA031097F") & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .(pid, bl_date)], 
@@ -2483,4 +2558,3 @@ save(list = c(setdiff(ls(), c("tkns","token","plev","plist","figtop","figtop_VL"
                 "uri","rcon"))),
      file = "n4c.Rdata")
 ```
-
