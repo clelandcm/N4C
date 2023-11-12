@@ -2391,16 +2391,30 @@ setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
                   new = c('BL_Undetectable','FU1_Undetectable','FU2_Undetectable'))
 ```
 
-```{r, results='asis', eval=FALSE}
+## Viral Load < 200 copies/mL at Baseline (n=222)
+```{r, results='asis'}
 mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
                                        !is.na(BL_Undetectable) &
-                                       !is.na(FU1_Undetectable),], 
-                               row = BL_Undetectable, 
-                               col = FU1_Undetectable,
+                                       BL_Undetectable == "Yes",], 
+                               row = FU1_Undetectable, 
+                               col = FU2_Undetectable,
                                percent = "cell",
-                               label = list(BL_Undetectable ~ "Undetectable at BL", 
-                                            FU1_Undetectable ~ "Undetectable at 9 Month Follow-Up"))
+                               label = list(FU1_Undetectable ~ "Undetectable at 9M", 
+                                            FU2_Undetectable ~ "Undetectable at 18M"))
 print(mytab4)
+```
+
+## Viral Load $>=$ 200 copies/mL at Baseline (n=52)
+```{r, results='asis'}
+mytab5 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
+                                       !is.na(BL_Undetectable) &
+                                       BL_Undetectable == "No",], 
+                               row = FU1_Undetectable, 
+                               col = FU2_Undetectable,
+                               percent = "cell",
+                               label = list(FU1_Undetectable ~ "Undetectable at 9M", 
+                                            FU2_Undetectable ~ "Undetectable at 18M"))
+print(mytab5)
 ```
 
 ```{r}
@@ -2423,7 +2437,7 @@ wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == "Yes" ~ "Unde
                                                FU2_Undetectable == "No" ~ "Detectable at 18M")]
 ```
 
-```{r, results='asis'}
+```{r, results='asis', eval=FALSE}
 mytab4 <- wide_VL[pid %in% Enrolled,] |> 
   tbl_strata(
     strata = BL_Undetectable,
@@ -2438,7 +2452,7 @@ mytab4 <- wide_VL[pid %in% Enrolled,] |>
 print(mytab4)
 ```
 
--   n=`r nrow(change_VL_status)` participants have had a change in suppression over time
+-   n=`r nrow(change_VL_status)` participants had a change in HIV viral load suppression over time
 
 # Prescreening Form (n=`r nrow(pscrn)`)
 * Prescreener completed (n=`r sum(pscrn$fu_form3___1 == "Checked")`)     
