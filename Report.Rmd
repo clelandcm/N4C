@@ -685,7 +685,7 @@ ggplot(enroll_new_m[type %in% c('Cumulative Enrolled','Cumulative Target'),],
 enroll_new[day == as.Date("2023-11-01"), .(`Cumulative Enrolled`, 
                                 `Cumulative Target` = ceiling(`Cumulative Target`), 
                                 `Current Deficit` = ceiling(Deficit))] |>
-  kbl(., booktabs = T, escape = F, align = "c") |>
+  kbl(booktabs = T, escape = F, align = "c") |>
   kable_paper("hover", full_width = FALSE)
 ```
 
@@ -730,7 +730,7 @@ ggplot(enroll_new_VL[!is.na(blood_vl_q2),],
 
 ```{r}
 enroll_new_VL[bl_date == as.Date("2023-11-01"), .(`Viral Load` = blood_vl_q2, `Cumulative Enrolled`),] |>
-  kbl(., booktabs = T, escape = F, align = "c") |>
+  kbl(booktabs = T, escape = F, align = "c") |>
   kable_paper("hover", full_width = FALSE)
 ```
 
