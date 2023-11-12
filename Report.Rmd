@@ -840,7 +840,7 @@ MEI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 1,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(MEI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(MEI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -883,7 +883,7 @@ SOI_m[, Response_n := case_when(Response == "Does not describe me at all" ~ 0,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(SOI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(SOI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -923,7 +923,7 @@ GQI_m[, Response_n := case_when(Response == "Strongly Disagree" ~ 0,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(GQI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(GQI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -1072,7 +1072,7 @@ table1(~ `Social Support Total`,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(socsup_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(socsup_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -1112,7 +1112,7 @@ table1(~ `Everyday Discrimination Total`,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(edd_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(edd_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -1150,7 +1150,7 @@ table1(~ `HIV Stigma Total`,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(stig_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(stig_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -1212,7 +1212,7 @@ table1(~ `Trust in Provider Total (0-44)`,
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(tprov_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") |>
+myalpha <- dcast(tprov_m[,.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -1957,7 +1957,7 @@ table1(~ `PHQ8 Total Score`, data = phq_m[, .(`PHQ8 Total Score` = if (all(NMISS
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(phq_m, pid ~ variable, value.var = "value") |>
+myalpha <- dcast(phq_m, pid ~ variable, value.var = "value") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
@@ -2000,7 +2000,7 @@ table1(~ ., data = resil[, .SD, .SDcols = !(names(resil) %like% "pid")])
 Coefficient Alpha
 
 ```{r}
-myalpha <- dcast(resil_m, pid ~ variable, value.var = "value") |>
+myalpha <- dcast(resil_m, pid ~ variable, value.var = "value") %>%
   .[, pid := NULL] |>
   psych::alpha()
 
