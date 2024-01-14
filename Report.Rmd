@@ -350,7 +350,6 @@ table1(~ withdrawal_form, data = wform)
 
 -   **n=`r nrow(wform)`** withdrawals from study\
 -   **n=`r sum(!(Enrolled %in% wform$pid))`** enrolled participants remaining after withdrawals\
--   withdrawn participants are not included in summaries of baseline and follow-ups
 
 ```{r, echo=FALSE}
 Not_Withdrawn <- setdiff(Enrolled, wform$pid)
