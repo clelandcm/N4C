@@ -333,12 +333,14 @@ wform[, withdrawal_form := car::recode(withdrawal_form, "1='declined to particip
                                                          3='deceased';
                                                          4='withdrawn due to incarceration';
                                                          5='withdrawn due to previous enrollment';
+                                                         6='disclosed information that made participant not eligible for the study';
                                                          996='withdrawn for other reason'",
                                        levels = c('declined to participate',
                                                   'moved out of area',
                                                   'deceased',
                                                   'withdrawn due to incarceration',
                                                   'withdrawn due to previous enrollment',
+                                                  'disclosed information that made participant not eligible for the study',
                                                   'withdrawn for other reason'))]
 
 label(wform$withdrawal_form) <- "Participation has concluded in the study due to:"
