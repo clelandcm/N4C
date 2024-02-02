@@ -1947,7 +1947,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 
 ```{r}
 phq_m <- melt(DT_n[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-     .SD, .SDcols = names(DT) %like% "bl_phq\\d|pid"], id.vars = "pid")
+     .SD, .SDcols = names(DT_n) %like% "bl_phq\\d|pid"], id.vars = "pid")
 
 phq_m[, value := car::recode(value, "5:hi=NA")]
 phq_m[, NMISS := sum(is.na(value)), by = .(pid)]
