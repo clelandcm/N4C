@@ -995,14 +995,14 @@ table1(~ bl_hivcare + bl_hivcare1 + bl_hivcare3 + bl_hivcare4 + bl_hivcare6 + bl
 
 ```{r}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "Yes" & bl_art4 > 0, 
-                      .SD, .SDcols = names(n4c) %like% "bl_stopart\\d+$"])
+                      .SD, .SDcols = names(DT) %like% "bl_stopart\\d+$"])
 ```
 
 ## Reasons for never taking ART
 
 ```{r, eval = any(!is.na(DT$bl_art1) & DT$bl_art1 == "No")}
 table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "No", 
-                      .SD, .SDcols = names(n4c) %like% "bl_neverart\\d+$"])
+                      .SD, .SDcols = names(DT) %like% "bl_neverart\\d+$"])
 ```
 
 ```{r, eval = !any(!is.na(DT$bl_art1) & DT$bl_art1 == "No")}
@@ -1029,7 +1029,7 @@ table1::table1(~ bl_motivation1 + bl_motivation2 +
 DT[is.na(bl_outcome11) & bl_outcome10 == "Very", bl_outcome11 := "Very"]
 DT[is.na(bl_outcome12) & bl_outcome11 == "Very", bl_outcome12 := "Very"]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_outcome\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_outcome\\d"])
 ```
 
 ## IPV
@@ -1046,7 +1046,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Sherbourne, C. D., & Stewart, A. L. (1991). The MOS social support survey. Social science & medicine, 32(6), 705-714.](https://www.sciencedirect.com/science/article/abs/pii/027795369190150B)
 
 ```{r}
-socsup <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_mos\\d"]
+socsup <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_mos\\d"]
 
 socsup_m <- melt(socsup, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1057,7 +1057,7 @@ socsup_m[, Response_n := car::recode(Response, "'None of the time'=0;
                                                 'All of the time'=4;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_mos\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_mos\\d"])
 ```
 
 <br>
@@ -1085,7 +1085,7 @@ myalpha[1:4] |> pander()
 [Williams, D. R., Yu, Y., Jackson, J. S., & Anderson, N. B. (1997). Racial differences in physical and mental health: Socio-economic status, stress and discrimination. Journal of health psychology, 2(3), 335-351.](https://journals.sagepub.com/doi/abs/10.1177/135910539700200305)
 
 ```{r}
-edd <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|discrim\\d+$"]
+edd <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|discrim\\d+$"]
 
 edd_m <- melt(edd, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1097,7 +1097,7 @@ edd_m[, Response_n := car::recode(Response, "'Never'=1;
                                                 'Almost everyday'=6;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_discrim\\d+$"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_discrim\\d+$"])
 ```
 
 <br>
@@ -1125,7 +1125,7 @@ myalpha[1:4] |> pander()
 [Wright, K., Naar-King, S., Lam, P., Templin, T., & Frey, M. (2007). Stigma scale revised: reliability and validity of a brief measure of stigma for HIV+ youth. Journal of adolescent health, 40(1), 96-98.](https://www.sciencedirect.com/science/article/pii/S1054139X06003004)
 
 ```{r}
-stig <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_stigma\\d"]
+stig <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_stigma\\d"]
 
 stig_m <- melt(stig, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1135,7 +1135,7 @@ stig_m[, Response_n := car::recode(Response, "'Strongly Disagree'=1;
                                                 'Strongly Agree'=4;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_stigma\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_stigma\\d"])
 ```
 
 <br>
@@ -1163,13 +1163,13 @@ myalpha[1:4] |> pander()
 [Yatchmenoff, D. K. (2005). Measuring client engagement from the client's perspective in nonvoluntary child protective services. Research on social work practice, 15(2), 84-96.](https://journals.sagepub.com/doi/abs/10.1177/1049731504271605)
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_clientcare\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_clientcare\\d"])
 ```
 
 ## HIV Care Satisfaction
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_spns\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_spns\\d"])
 ```
 
 ## Trust in Provider
@@ -1177,7 +1177,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Anderson, L. A., & Dedrick, R. F. (1990). Development of the Trust in Physician scale: a measure to assess interpersonal trust in patient-physician relationships. Psychological reports, 67(3_suppl), 1091-1100.](https://journals.sagepub.com/doi/abs/10.2466/pr0.1990.67.3f.1091)
 
 ```{r}
-tprov <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_trust\\d"]
+tprov <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_trust\\d"]
 
 tprov_m <- melt(tprov, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1197,7 +1197,7 @@ tprov_m[!(Item %in% c('bl_trust1','bl_trust5','bl_trust7','bl_trust11')),
                                               'Strongly Agree'=4;
                                                else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "bl_trust\\d"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_trust\\d"])
 ```
 
 <br>
@@ -1242,7 +1242,7 @@ label(DT$bl_artoutcome1f) <- "How confident are you that HIV medication will dec
 label(DT$bl_artoutcome1g) <- "How confident are you that HIV medication will prevent you from needing to be hospitalized?"
 
 erlen_oe <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .SD, .SDcols = names(n4c) %like% "pid|bl_artoutcome1"], id.vars = "pid")
+                      .SD, .SDcols = names(DT) %like% "pid|bl_artoutcome1"], id.vars = "pid")
 
 label(erlen_oe$value) <- "Overall ART Outcome Expectancy (1-10)"
 
@@ -1264,7 +1264,7 @@ Coefficient Alpha
 
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-              .SD, .SDcols = names(n4c) %like% "bl_artoutcome1"] |>
+              .SD, .SDcols = names(DT) %like% "bl_artoutcome1"] |>
   psych::alpha()
 
 myalpha[1:3] |> pander()
@@ -1308,7 +1308,7 @@ label(DT$bl_artadh14) <- "How confident are you that you can follow the plan for
 label(DT$bl_artadh15) <- "How confident are you that you can follow the plan for taking your HIV medication when you feel happy?"
 
 erlen_mse <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-                      .SD, .SDcols = names(n4c) %like% "pid|bl_artadh\\d+$"], id.vars = "pid")
+                      .SD, .SDcols = names(DT) %like% "pid|bl_artadh\\d+$"], id.vars = "pid")
 
 DT <- merge(DT, erlen_mse[, .(HMed_Self_Efficacy = mean(value, na.rm = TRUE)), by = .(pid)], by = "pid")
             
@@ -1324,7 +1324,7 @@ Coefficient Alpha
 
 ```{r}
 myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
-              .SD, .SDcols = names(n4c) %like% "bl_artadh\\d+$"] |>
+              .SD, .SDcols = names(DT) %like% "bl_artadh\\d+$"] |>
   psych::alpha()
 
 myalpha[1:3] |> pander()
@@ -1335,7 +1335,7 @@ myalpha[1:3] |> pander()
 [Finkelhor, D., Shattuck, A., Turner, H., & Hamby, S. (2015). A revised inventory of adverse childhood experiences. Child abuse & neglect, 48, 13-21.](https://www.sciencedirect.com/science/article/pii/S0145213415002409)
 
 ```{r}
-ACES_m <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(n4c) %like% "pid|bl_aces\\d"]
+ACES_m <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_aces\\d"]
 ACES_m <- melt(ACES_m, id.vars = "pid")
 DT <- merge(DT, ACES_m[, .(ACES_sum = sum(value == "Yes")), by = .(pid)], by = "pid")
 
@@ -2027,7 +2027,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 ### Second Sample
 
 ```{r, eval = any(!is.na(n4c$drug_sample2) & n4c$drug_sample2 == "Yes")}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_sample2 == "Yes", .SD, .SDcols = names(n4c) %like% "^drug_sample2_test"])
+table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_sample2 == "Yes", .SD, .SDcols = names(DT) %like% "^drug_sample2_test"])
 ```
 
 ```{r, eval = !any(!is.na(n4c$drug_sample2) & n4c$drug_sample2 == "Yes")}
