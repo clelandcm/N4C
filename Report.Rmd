@@ -353,8 +353,13 @@ table1(~ withdrawal_form, data = wform)
 -   **n=`r nrow(wform)`** withdrawals from study\
 -   **n=`r sum(!(Enrolled %in% wform$pid))`** enrolled participants remaining after withdrawals\
 
+```{r}
+NotEligible_PostEnrollment <- c("GAR030795M", "STA031097F", "ZAJ010195M")
+```
+
 ```{r, echo=FALSE}
 Not_Withdrawn <- setdiff(Enrolled, wform$pid)
+Not_Withdrawn <- setdiff(Enrolled, NotEligible_PostEnrollment)
 ```
 
 ```{r}
@@ -742,21 +747,22 @@ enroll_new_VL[bl_date == as.Date("2023-11-01"), .(`Viral Load` = blood_vl_q2, `C
 ### Age, Sex at Birth, and Race/Ethnicity
 
 ```{r}
-table1(~ ., data = n4c[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)] & 
+table1(~ ., data = n4c[pid %in% Not_Withdrawn & pid %in% DT$pid[!is.na(DT$bl_date)] & 
                          redcap_event_name == "Screen 1 (Arm 1: Screener)", .SD, .SDcols = names(n4c) %like% "scr1_sexbirth$|^scr1_ethnicity|^scr1_race___|scr1_age"])
 ```
 
 ### PHS Categories
 
 ```{r, results='asis'}
-mytab2 <- gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date)], row = PHS_cat, col = Hispanic)
+mytab2 <- gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date) & !(pid %in% NotEligible_PostEnrollment)], 
+                               row = PHS_cat, col = Hispanic)
 print(mytab2)
 ```
 
 <br>
 
 ```{r}
-with(demog[Enrolled == TRUE & !is.na(bl_date)], 
+with(demog[Enrolled == TRUE & !is.na(bl_date) & !(pid %in% NotEligible_PostEnrollment)], 
      table(PHS_cat, Hispanic, scr1_sexbirth)) |> 
   as.data.frame() |>
   subset(Freq > 0) |>
@@ -767,13 +773,13 @@ with(demog[Enrolled == TRUE & !is.na(bl_date)],
 ### Gender Identity
 
 ```{r}
-table1(~ Gender_Identity, data = gendID_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
+table1(~ Gender_Identity, data = gendID_m[pid %in% Not_Withdrawn & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual Identity
 
 ```{r}
-table1(~ Sexual_Orientation, data = sexor_m[pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)],])
+table1(~ Sexual_Orientation, data = sexor_m[pid %in% Not_Withdrawn & pid %in% DT$pid[!is.na(DT$bl_date)],])
 ```
 
 ### Sexual or Gender Minority
@@ -787,7 +793,7 @@ sexmin[, SO_Minority := ifelse(Sexual_Orientation == "Straight or heterosexual",
 sexmin[, GI_Minority := ifelse((Gender_Identity == "Man, male" & scr1_sexbirth == "Male") | 
                                (Gender_Identity == "Woman, female" & scr1_sexbirth == "Female"), "No", "Yes")]
 
-sexmin[, Enrolled := pid %in% Enrolled & pid %in% DT$pid[!is.na(DT$bl_date)]]
+sexmin[, Enrolled := pid %in% Not_Withdrawn & pid %in% DT$pid[!is.na(DT$bl_date)]]
 ```
 
 ```{r, results='asis'}
@@ -803,7 +809,7 @@ print(mytab9)
 label(DT$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
 
 table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_employ4 + bl_insurance, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Multigroup Ethnic Identity
@@ -813,14 +819,14 @@ table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_e
 ```{r}
 table1(~ bl_identity1 + bl_identity2 + bl_identity3 + bl_identity4 +
          bl_identity5 + bl_identity6, 
-       data = DT[pid %in% Enrolled & 
+       data = DT[pid %in% Not_Withdrawn & 
                  pid != "dstest" &
                  redcap_event_name == "baseline_interview_arm_2" & 
                  !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
-MEI_m <- melt(DT[pid %in% Enrolled &
+MEI_m <- melt(DT[pid %in% Not_Withdrawn &
                  pid != "dstest" &   
                  redcap_event_name == "baseline_interview_arm_2" & 
                  !is.na(bl_date), 
@@ -857,14 +863,14 @@ myalpha[1:4] |> pander()
 ```{r}
 table1(~ bl_soidentity1 + bl_soidentity2 + bl_soidentity3 + bl_soidentity4 +
          bl_soidentity5 + bl_soidentity6, 
-       data = DT[pid %in% Enrolled &
+       data = DT[pid %in% Not_Withdrawn &
                  pid != "dstest" &   
                  redcap_event_name == "baseline_interview_arm_2" & 
                  !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
-SOI_m <- melt(DT[pid %in% Enrolled & 
+SOI_m <- melt(DT[pid %in% Not_Withdrawn & 
                  pid != "dstest" &
                  redcap_event_name == "baseline_interview_arm_2" & 
                  !is.na(bl_date), 
@@ -900,14 +906,14 @@ myalpha[1:4] |> pander()
 
 ```{r}
 table1(~ bl_gqidentity1 + bl_gqidentity2 + bl_gqidentity3 + bl_gqidentity4, 
-       data = DT[pid %in% Enrolled &
+       data = DT[pid %in% Not_Withdrawn &
                  pid != "dstest" &   
                  redcap_event_name == "baseline_interview_arm_2" & 
                  !is.na(bl_date)], render = my.render)
 ```
 
 ```{r}
-GQI_m <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+GQI_m <- melt(DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
    .(pid, bl_gqidentity1, bl_gqidentity2, bl_gqidentity3, bl_gqidentity4)],
    id.vars = "pid", variable.name = "Item", value.name = "Response")
 
@@ -935,14 +941,14 @@ myalpha[1:4] |> pander()
 
 ```{r}
 table1(~ bl_health1 + bl_health2, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Diagnosis
 
 ```{r}
 HIVdx <- merge(n4c[redcap_event_name == "Screen 1 (Arm 1: Screener)", .(pid, scr1_age)],
-               n4c[pid %in% Enrolled & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), 
+               n4c[pid %in% Not_Withdrawn & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), 
                    .(pid, bl_date, bl_diagnosis2)],
                all.x = FALSE, all.y = TRUE)
 
@@ -955,7 +961,7 @@ label(DT$Years_HIV) <- "Years Living with HIV at Baseline"
 ```
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .(bl_diagnosis1, bl_diagnosis2, bl_diagnosis3,bl_diagnosis4,Years_HIV)])
 ```
 
@@ -967,7 +973,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 DT[bl_artvas2 == "No" & is.na(bl_artvas3), bl_artvas3 := 0]
 
 table1(~ bl_artvas2 + bl_artvas3, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ### History/Current Regimen
@@ -977,7 +983,7 @@ label(DT$bl_art2) <- "How many months had passed between the time you were first
 label(DT$bl_art4) <- "How many different times have you stopped taking HIV medication for at least two days, then started again?"
 
 table1(~ bl_art1 + bl_art_inj1 + bl_art2 + bl_art3 + bl_art4 + bl_art5, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## HIV Care
@@ -988,20 +994,20 @@ label(DT$bl_hivcare7) <- "In the past year, how many appointments with your HIV 
 label(DT$bl_hivcare6) <- "Think about the past year. How many times did you see your HIV care medical provider? If you are not sure, take your best guess."
 
 table1(~ bl_hivcare + bl_hivcare1 + bl_hivcare3 + bl_hivcare4 + bl_hivcare6 + bl_hivcare7, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Reasons for sometimes stopping or discontinuing ART
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "Yes" & bl_art4 > 0, 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "Yes" & bl_art4 > 0, 
                       .SD, .SDcols = names(DT) %like% "bl_stopart\\d+$"])
 ```
 
 ## Reasons for never taking ART
 
 ```{r, eval = any(!is.na(DT$bl_art1) & DT$bl_art1 == "No")}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "No", 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & bl_art1 == "No", 
                       .SD, .SDcols = names(DT) %like% "bl_neverart\\d+$"])
 ```
 
@@ -1018,7 +1024,7 @@ table1::table1(~ bl_motivation1 + bl_motivation2 +
                  bl_motivation7 + bl_motivation8 +
                  bl_motivation9 + bl_motivation10 +
                  bl_motivation11 + bl_motivation12, 
-               data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date)])
+               data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date)])
 ```
 
 ## Life Outcome Expectancies
@@ -1029,7 +1035,7 @@ table1::table1(~ bl_motivation1 + bl_motivation2 +
 DT[is.na(bl_outcome11) & bl_outcome10 == "Very", bl_outcome11 := "Very"]
 DT[is.na(bl_outcome12) & bl_outcome11 == "Very", bl_outcome12 := "Very"]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_outcome\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_outcome\\d"])
 ```
 
 ## IPV
@@ -1037,7 +1043,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Goldenberg, T., Jadwin-Cakmak, L., & Harper, G. W. (2018). Intimate partner violence among transgender youth: Associations with intrapersonal and structural factors. Violence and gender, 5(1), 19-25.](https://www.liebertpub.com/doi/full/10.1089/vio.2017.0041)
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .(bl_ipv1,bl_ipv2,bl_ipv3,bl_ipv4)])
 ```
 
@@ -1046,7 +1052,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Sherbourne, C. D., & Stewart, A. L. (1991). The MOS social support survey. Social science & medicine, 32(6), 705-714.](https://www.sciencedirect.com/science/article/abs/pii/027795369190150B)
 
 ```{r}
-socsup <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_mos\\d"]
+socsup <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_mos\\d"]
 
 socsup_m <- melt(socsup, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1057,7 +1063,7 @@ socsup_m[, Response_n := car::recode(Response, "'None of the time'=0;
                                                 'All of the time'=4;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_mos\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_mos\\d"])
 ```
 
 <br>
@@ -1085,7 +1091,7 @@ myalpha[1:4] |> pander()
 [Williams, D. R., Yu, Y., Jackson, J. S., & Anderson, N. B. (1997). Racial differences in physical and mental health: Socio-economic status, stress and discrimination. Journal of health psychology, 2(3), 335-351.](https://journals.sagepub.com/doi/abs/10.1177/135910539700200305)
 
 ```{r}
-edd <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|discrim\\d+$"]
+edd <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|discrim\\d+$"]
 
 edd_m <- melt(edd, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1097,7 +1103,7 @@ edd_m[, Response_n := car::recode(Response, "'Never'=1;
                                                 'Almost everyday'=6;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_discrim\\d+$"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_discrim\\d+$"])
 ```
 
 <br>
@@ -1125,7 +1131,7 @@ myalpha[1:4] |> pander()
 [Wright, K., Naar-King, S., Lam, P., Templin, T., & Frey, M. (2007). Stigma scale revised: reliability and validity of a brief measure of stigma for HIV+ youth. Journal of adolescent health, 40(1), 96-98.](https://www.sciencedirect.com/science/article/pii/S1054139X06003004)
 
 ```{r}
-stig <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_stigma\\d"]
+stig <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_stigma\\d"]
 
 stig_m <- melt(stig, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1135,7 +1141,7 @@ stig_m[, Response_n := car::recode(Response, "'Strongly Disagree'=1;
                                                 'Strongly Agree'=4;
                                                  else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_stigma\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_stigma\\d"])
 ```
 
 <br>
@@ -1163,13 +1169,13 @@ myalpha[1:4] |> pander()
 [Yatchmenoff, D. K. (2005). Measuring client engagement from the client's perspective in nonvoluntary child protective services. Research on social work practice, 15(2), 84-96.](https://journals.sagepub.com/doi/abs/10.1177/1049731504271605)
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_clientcare\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_clientcare\\d"])
 ```
 
 ## HIV Care Satisfaction
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_spns\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_spns\\d"])
 ```
 
 ## Trust in Provider
@@ -1177,7 +1183,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 [Anderson, L. A., & Dedrick, R. F. (1990). Development of the Trust in Physician scale: a measure to assess interpersonal trust in patient-physician relationships. Psychological reports, 67(3_suppl), 1091-1100.](https://journals.sagepub.com/doi/abs/10.2466/pr0.1990.67.3f.1091)
 
 ```{r}
-tprov <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_trust\\d"]
+tprov <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_trust\\d"]
 
 tprov_m <- melt(tprov, id.vars = c("pid"), variable.name = "Item", value.name = "Response")
 
@@ -1197,7 +1203,7 @@ tprov_m[!(Item %in% c('bl_trust1','bl_trust5','bl_trust7','bl_trust11')),
                                               'Strongly Agree'=4;
                                                else=NA", as.factor = FALSE)]
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_trust\\d"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_trust\\d"])
 ```
 
 <br>
@@ -1241,12 +1247,12 @@ label(DT$bl_artoutcome1e) <- "How confident are you that HIV medication will dec
 label(DT$bl_artoutcome1f) <- "How confident are you that HIV medication will decrease your HIV viral load?"
 label(DT$bl_artoutcome1g) <- "How confident are you that HIV medication will prevent you from needing to be hospitalized?"
 
-erlen_oe <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+erlen_oe <- melt(DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "pid|bl_artoutcome1"], id.vars = "pid")
 
 label(erlen_oe$value) <- "Overall ART Outcome Expectancy (1-10)"
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "bl_artoutcome1"])
 ```
 
@@ -1263,7 +1269,7 @@ table1(~ `Overall ART Outcome Expectancy (1-10)`,
 Coefficient Alpha
 
 ```{r}
-myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+myalpha <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
               .SD, .SDcols = names(DT) %like% "bl_artoutcome1"] |>
   psych::alpha()
 
@@ -1307,14 +1313,14 @@ label(DT$bl_artadh13) <- "How confident are you that you can follow the plan for
 label(DT$bl_artadh14) <- "How confident are you that you can follow the plan for taking your HIV medication when you feel unhappy or depressed?"
 label(DT$bl_artadh15) <- "How confident are you that you can follow the plan for taking your HIV medication when you feel happy?"
 
-erlen_mse <- melt(DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+erlen_mse <- melt(DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "pid|bl_artadh\\d+$"], id.vars = "pid")
 
 DT <- merge(DT, erlen_mse[, .(HMed_Self_Efficacy = mean(value, na.rm = TRUE)), by = .(pid)], by = "pid")
             
 label(DT$HMed_Self_Efficacy) <- "Overall Self-Efficacy for ART (1-10)"
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "bl_artadh\\d+$|HMed_Self_Efficacy"])
 ```
 
@@ -1323,7 +1329,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 Coefficient Alpha
 
 ```{r}
-myalpha <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+myalpha <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
               .SD, .SDcols = names(DT) %like% "bl_artadh\\d+$"] |>
   psych::alpha()
 
@@ -1335,13 +1341,13 @@ myalpha[1:3] |> pander()
 [Finkelhor, D., Shattuck, A., Turner, H., & Hamby, S. (2015). A revised inventory of adverse childhood experiences. Child abuse & neglect, 48, 13-21.](https://www.sciencedirect.com/science/article/pii/S0145213415002409)
 
 ```{r}
-ACES_m <- DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_aces\\d"]
+ACES_m <- DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "pid|bl_aces\\d"]
 ACES_m <- melt(ACES_m, id.vars = "pid")
 DT <- merge(DT, ACES_m[, .(ACES_sum = sum(value == "Yes")), by = .(pid)], by = "pid")
 
 label(DT$ACES_sum) <- "Number of Yes Responses to ACES Items (0-21)"
 
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_aces\\d|ACES_sum"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT) %like% "bl_aces\\d|ACES_sum"])
 ```
 
 ## Social Network Members
@@ -1350,7 +1356,7 @@ table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_intervi
 snet_items <- names(n4c)[grep("pid|redcap_event_name|bl_person[1-5][a-n]|bl_person[1-5]", names(n4c))]
 
 snet <- n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" &
-              pid %in% Enrolled, 
+              pid %in% Not_Withdrawn, 
             .SD, .SDcols = snet_items]
 
 sn_bl <- melt(snet, id.vars = c("pid","redcap_event_name"),
@@ -1483,7 +1489,7 @@ DT[bl_sti1i == "No" & is.na(bl_sti2i), bl_sti2i := car::recode(bl_sti2i, "NA='No
 ```{r}
 table1(~ bl_sti1a + bl_sti1b + bl_sti1c + bl_sti1d + bl_sti1e +
          bl_sti1f + bl_sti1g + bl_sti1h + bl_sti1i,
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ### Past Year
@@ -1491,7 +1497,7 @@ table1(~ bl_sti1a + bl_sti1b + bl_sti1c + bl_sti1d + bl_sti1e +
 ```{r}
 table1(~ bl_sti2a + bl_sti2b + bl_sti2c + bl_sti2d + bl_sti2e +
          bl_sti2f + bl_sti2g + bl_sti2h + bl_sti2i,
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## WHO Assist
@@ -1820,7 +1826,7 @@ label(assist_wide$Any_Moderate_High_Risk_NoTOBCANALC) <- "Any Moderate or High R
 ### Lifetime Use
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "^bl_whoassist1[a-l]$"])
 ```
 
@@ -1879,7 +1885,7 @@ save(list=c('assist','assist_wide'), file = "whorisk.Rdata")
 label(DT$bl_prep1) <- "Before today, have you ever heard of people regularly taking anti-HIV medicines BEFORE a sexual or drug use exposure, to reduce the risk of getting HIV?"
 
 table1(~ bl_prep1 + bl_prep2,
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Substance Use and Mental Health Treatment
@@ -1909,7 +1915,7 @@ DT[bl_sumhtx15 == "No" & is.na(bl_sumhtx30), bl_sumhtx30 := car::recode(bl_sumht
 ```{r}
 table1(~ bl_sumhtx1 + bl_sumhtx2 + bl_sumhtx3 + bl_sumhtx4 + bl_sumhtx5 +
          bl_sumhtx6 + bl_sumhtx7 + bl_sumhtx8 + bl_sumhtx9 + bl_sumhtx10, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 #### Past Six Months
@@ -1917,7 +1923,7 @@ table1(~ bl_sumhtx1 + bl_sumhtx2 + bl_sumhtx3 + bl_sumhtx4 + bl_sumhtx5 +
 ```{r}
 table1(~ bl_sumhtx16 + bl_sumhtx17 + bl_sumhtx18 + bl_sumhtx19 + bl_sumhtx20 +
          bl_sumhtx21 + bl_sumhtx22 + bl_sumhtx23 + bl_sumhtx24 + bl_sumhtx25, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ### Mental Health
@@ -1926,14 +1932,14 @@ table1(~ bl_sumhtx16 + bl_sumhtx17 + bl_sumhtx18 + bl_sumhtx19 + bl_sumhtx20 +
 
 ```{r}
 table1(~ bl_sumhtx11 + bl_sumhtx12 + bl_sumhtx13 + bl_sumhtx14 + bl_sumhtx15, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 #### Past Six Months
 
 ```{r}
 table1(~ bl_sumhtx26 + bl_sumhtx27 + bl_sumhtx28 + bl_sumhtx29 + bl_sumhtx30, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## PHQ
@@ -1941,12 +1947,12 @@ table1(~ bl_sumhtx26 + bl_sumhtx27 + bl_sumhtx28 + bl_sumhtx29 + bl_sumhtx30,
 [Kroenke, K., Strine, T. W., Spitzer, R. L., Williams, J. B., Berry, J. T., & Mokdad, A. H. (2009). The PHQ-8 as a measure of current depression in the general population. Journal of affective disorders, 114(1-3), 163-173.](https://www.sciencedirect.com/science/article/pii/S0165032708002826)
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
                       .SD, .SDcols = names(DT) %like% "bl_phq\\d"])
 ```
 
 ```{r}
-phq_m <- melt(DT_n[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
+phq_m <- melt(DT_n[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), 
      .SD, .SDcols = names(DT_n) %like% "bl_phq\\d|pid"], id.vars = "pid")
 
 phq_m[, value := car::recode(value, "5:hi=NA")]
@@ -1971,7 +1977,7 @@ myalpha[1:4] |> pander()
 
 ```{r}
 table1(~ bl_ptsd1 + bl_ptsd2 + bl_ptsd3 + bl_ptsd4 + ptsdscore, 
-       data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+       data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Resilience
@@ -2013,7 +2019,7 @@ myalpha[1:4] |> pander()
 ## Acceptance of Screening
 
 ```{r}
-table1(~ drug_accept_test, data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
+table1(~ drug_accept_test, data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date),])
 ```
 
 ## Substances Detected
@@ -2021,13 +2027,13 @@ table1(~ drug_accept_test, data = DT[pid %in% Enrolled & redcap_event_name == "b
 ### First Sample
 
 ```{r}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_accept_test == "Yes (Accepted)", .SD, .SDcols = names(DT) %like% "^drug_sample1_test"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_accept_test == "Yes (Accepted)", .SD, .SDcols = names(DT) %like% "^drug_sample1_test"])
 ```
 
 ### Second Sample
 
 ```{r, eval = any(!is.na(n4c$drug_sample2) & n4c$drug_sample2 == "Yes")}
-table1(~ ., data = DT[pid %in% Enrolled & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_sample2 == "Yes", .SD, .SDcols = names(DT) %like% "^drug_sample2_test"])
+table1(~ ., data = DT[pid %in% Not_Withdrawn & redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & drug_sample2 == "Yes", .SD, .SDcols = names(DT) %like% "^drug_sample2_test"])
 ```
 
 ```{r, eval = !any(!is.na(n4c$drug_sample2) & n4c$drug_sample2 == "Yes")}
@@ -2462,10 +2468,10 @@ setnames(wide_VL, old = c("Baseline Interview (Arm 2: Assessments)",
                   new = c('BL_Undetectable','FU1_Undetectable','FU2_Undetectable'))
 ```
 
-## Viral Load $\lt$ 200 copies/mL at Baseline (n=222)
+## Viral Load $\lt$ 200 copies/mL at Baseline (n=219)
 
 ```{r, results='asis'}
-mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
+mytab4 <- gtsummary::tbl_cross(wide_VL[pid %in% Not_Withdrawn & 
                                        !is.na(BL_Undetectable) &
                                        BL_Undetectable == "Yes",], 
                                row = FU1_Undetectable, 
@@ -2479,7 +2485,7 @@ print(mytab4)
 ## Viral Load $\ge$ 200 copies/mL at Baseline (n=52)
 
 ```{r, results='asis'}
-mytab5 <- gtsummary::tbl_cross(wide_VL[pid %in% Enrolled & 
+mytab5 <- gtsummary::tbl_cross(wide_VL[pid %in% Not_Withdrawn & 
                                        !is.na(BL_Undetectable) &
                                        BL_Undetectable == "No",], 
                                row = FU1_Undetectable, 
@@ -2491,14 +2497,14 @@ print(mytab5)
 ```
 
 ```{r}
-change_VL_status <- wide_VL[pid %in% Enrolled &
+change_VL_status <- wide_VL[pid %in% Not_Withdrawn &
         (!is.na(FU1_Undetectable) & FU1_Undetectable != BL_Undetectable) |
         (!is.na(FU2_Undetectable) & FU2_Undetectable != BL_Undetectable) |
         (!is.na(FU1_Undetectable) & !is.na(FU2_Undetectable) & FU1_Undetectable != FU2_Undetectable),]
 ```
 
 ```{r}
-longit_cohort <- wide_VL[pid %in% Enrolled] |> 
+longit_cohort <- wide_VL[pid %in% Not_Withdrawn] |> 
   cohort_start("Enrolled<br>") |>
     cohort_define(
     bl_n = .full |> filter(BL_Undetectable == "No"),
@@ -2572,7 +2578,7 @@ longit_flow |>
 ```
 
 ```{r, eval=FALSE}
-consort_plot(wide_VL[pid %in% Enrolled],
+consort_plot(wide_VL[pid %in% Not_Withdrawn],
              orders = c(pid      = 'Enrolled',
                         BL_Undetectable = 'Undetectable BL',
                         FU1_Undetectable = 'Undetectable 9M',
@@ -2595,7 +2601,7 @@ wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == "Yes" ~ "Supp
 ```
 
 ```{r, results='asis', eval=FALSE}
-mytab4 <- wide_VL[pid %in% Enrolled,] |> 
+mytab4 <- wide_VL[pid %in% Not_Withdrawn,] |> 
   tbl_strata(
     strata = BL_Undetectable,
     .tbl_fun =
