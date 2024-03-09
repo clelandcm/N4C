@@ -742,6 +742,8 @@ enroll_new_VL[bl_date == as.Date("2023-11-01"), .(`Viral Load` = blood_vl_q2, `C
 
 # Baseline Interview
 
+-   Three enrolled participants disclosed information which made them no longer eligible. These three participants are excluded from summaries of data collected at baseline. 
+
 ## Demographics (Baseline Sample)
 
 ### Age, Sex at Birth, and Race/Ethnicity
@@ -1450,8 +1452,7 @@ label(plev$Any_WRK) <- "Any Network Members Working a Job on the Books"
 label(plev$Any_PRT) <- "Any Network Members Who Are Romantic or Sex Partner"
 ```
 
--   **n=`r length(setdiff(Enrolled, sn_bl$pid))` enrolled participants without responses to social network items at baseline**
--   **n=`r nrow(wform)` withdrawn participants excluded**
+-   **n=`r length(setdiff(Not_Withdrawn, sn_bl$pid))` of 271 participants without responses to social network items at baseline**
 
 ### Participant Summaries
 
@@ -1513,7 +1514,8 @@ assist_Q1_cols <- c("pid", "redcap_event_name", "bl_whoassist1a", "bl_whoassist1
                     "bl_whoassist1d", "bl_whoassist1e", "bl_whoassist1f", "bl_whoassist1g", "bl_whoassist1h",
                     "bl_whoassist1i", "bl_whoassist1j", "bl_whoassist1k", "bl_whoassist1l")
 
-assist_Q1 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q1_cols],
+assist_Q1 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q1_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Ever_Used")
 
 assist_Q1[, Substance := gsub("bl_whoassist1", "", Substance)]
@@ -1538,7 +1540,8 @@ assist_Q2_cols <- c("pid", "redcap_event_name", "bl_whoassist2a", "bl_whoassist2
                     "bl_whoassist2d", "bl_whoassist2e", "bl_whoassist2f", "bl_whoassist2g", "bl_whoassist2h",
                     "bl_whoassist2i", "bl_whoassist2j", "bl_whoassist2k", "bl_whoassist2l")
 
-assist_Q2 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q2_cols],
+assist_Q2 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn,
+                      .SD, .SDcols = assist_Q2_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Use_P3M")
 
 assist_Q2[, Substance := gsub("bl_whoassist2", "", Substance)]
@@ -1561,7 +1564,8 @@ assist_Q3_cols <- c("pid", "redcap_event_name", "bl_whoassist3a", "bl_whoassist3
                     "bl_whoassist3d", "bl_whoassist3e", "bl_whoassist3f", "bl_whoassist3g", "bl_whoassist3h",
                     "bl_whoassist3i", "bl_whoassist3j", "bl_whoassist3k", "bl_whoassist3l")
 
-assist_Q3 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q3_cols],
+assist_Q3 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q3_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Urge_P3M")
 
 assist_Q3[, Substance := gsub("bl_whoassist3", "", Substance)]
@@ -1584,7 +1588,8 @@ assist_Q4_cols <- c("pid", "redcap_event_name", "bl_whoassist4a", "bl_whoassist4
                     "bl_whoassist4d", "bl_whoassist4e", "bl_whoassist4f", "bl_whoassist4g", "bl_whoassist4h",
                     "bl_whoassist4i", "bl_whoassist4j", "bl_whoassist4k", "bl_whoassist4l")
 
-assist_Q4 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q4_cols],
+assist_Q4 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q4_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Problems_P3M")
 
 assist_Q4[, Substance := gsub("bl_whoassist4", "", Substance)]
@@ -1607,7 +1612,8 @@ assist_Q5_cols <- c("pid", "redcap_event_name", "bl_whoassist5b", "bl_whoassist5
                     "bl_whoassist5d", "bl_whoassist5e", "bl_whoassist5f", "bl_whoassist5g", "bl_whoassist5h",
                     "bl_whoassist5i", "bl_whoassist5j", "bl_whoassist5k", "bl_whoassist5l")
 
-assist_Q5 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q5_cols],
+assist_Q5 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q5_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Failed_P3M")
 
 assist_Q5[, Substance := gsub("bl_whoassist5", "", Substance)]
@@ -1629,7 +1635,8 @@ assist_Q6_cols <- c("pid", "redcap_event_name", "bl_whoassist6a", "bl_whoassist6
                     "bl_whoassist6d", "bl_whoassist6e", "bl_whoassist6f", "bl_whoassist6g", "bl_whoassist6h",
                     "bl_whoassist6i", "bl_whoassist6j", "bl_whoassist6k", "bl_whoassist6l")
 
-assist_Q6 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q6_cols],
+assist_Q6 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q6_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Concern_Ever")
 
 assist_Q6[, Substance := gsub("bl_whoassist6", "", Substance)]
@@ -1652,7 +1659,8 @@ assist_Q7_cols <- c("pid", "redcap_event_name", "bl_whoassist7a", "bl_whoassist7
                     "bl_whoassist7d", "bl_whoassist7e", "bl_whoassist7f", "bl_whoassist7g", "bl_whoassist7h",
                     "bl_whoassist7i", "bl_whoassist7j", "bl_whoassist7k", "bl_whoassist7l")
 
-assist_Q7 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .SD, .SDcols = assist_Q7_cols],
+assist_Q7 <- melt(n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+                      .SD, .SDcols = assist_Q7_cols],
                   id.vars = c("pid","redcap_event_name"), variable.name = "Substance", value.name = "Cut_Down_Ever")
 
 assist_Q7[, Substance := gsub("bl_whoassist7", "", Substance)]
@@ -1752,7 +1760,8 @@ assist[, Cut_Down_Ever_num := as.numeric(Cut_Down_Ever_num)]
 ```
 
 ```{r}
-assist[, Risk_Score := Use_P3M_num + Urge_P3M_num + Problems_P3M_num + Failed_P3M_num + Concern_Ever_num + Cut_Down_Ever_num, by = .(pid, Substance)]
+assist[, Risk_Score := Use_P3M_num + Urge_P3M_num + Problems_P3M_num + Failed_P3M_num + Concern_Ever_num + Cut_Down_Ever_num, 
+       by = .(pid, Substance)]
 
 assist[, Risk_Category := case_when(Risk_Score %in% 0:3 & Substance != 'alc' ~ 'Lower Risk',
                                     Risk_Score %in% 4:26 & Substance != 'alc' ~ 'Moderate Risk',
@@ -1957,7 +1966,11 @@ phq_m <- melt(DT_n[pid %in% Not_Withdrawn & redcap_event_name == "baseline_inter
 
 phq_m[, value := car::recode(value, "5:hi=NA")]
 phq_m[, NMISS := sum(is.na(value)), by = .(pid)]
+```
 
+<br>
+
+```{r}
 table1(~ `PHQ8 Total Score`, data = phq_m[, .(`PHQ8 Total Score` = if (all(NMISS > 3)) as.double(NA) else mean(value - 1, na.rm=TRUE) * 8), by = .(pid)])
 ```
 
@@ -1983,7 +1996,8 @@ table1(~ bl_ptsd1 + bl_ptsd2 + bl_ptsd3 + bl_ptsd4 + ptsdscore,
 ## Resilience
 
 ```{r}
-resil <- DT_n[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date), .SD, .SDcols = names(DT_n) %like% "pid|bl_resilience\\d+$"]
+resil <- DT_n[redcap_event_name == "baseline_interview_arm_2" & !is.na(bl_date) & pid %in% Not_Withdrawn, 
+              .SD, .SDcols = names(DT_n) %like% "pid|bl_resilience\\d+$"]
 resil_m <- melt(resil, id.vars ="pid")
 resil_m[, value := car::recode(value, "6:hi=NA") - 1]
 resil <- merge(dcast(resil_m, pid ~ variable, value.var = "value"), 
