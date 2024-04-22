@@ -981,6 +981,9 @@ table1(~ bl_artvas2 + bl_artvas3,
 ### History/Current Regimen
 
 ```{r}
+DT[, bl_art3 := car::recode(bl_art3, "-997=NA")] 
+
+
 label(DT$bl_art2) <- "How many months had passed between the time you were first diagnosed with HIV and the first time you took HIV medication?"
 label(DT$bl_art4) <- "How many different times have you stopped taking HIV medication for at least two days, then started again?"
 
