@@ -91,14 +91,21 @@ vlabmatch <- data.frame(var = val_labs,
                         ddict_index = match(val_labs, meta_DT$var))
 
 vlabmatch$factlab <- meta_DT$factlab[vlabmatch$ddict_index]
+```
+
+```{r}
+DT <- as.data.frame(DT)
 
 for(i in 1:length(val_labs)){
 DT[,vlabmatch$DT_index[i]] <- car::recode(var = DT[,vlabmatch$DT_index[i]], 
                                                 recodes = vlabmatch$factlab[i],
-                                                levels = strsplit(x = gsub("\\d+=|'", "", vlabmatch$factlab[i]), split = ";")[[1]],
+                                                levels = strsplit(x = gsub("\\d+=|'", "", 
+                                                                           vlabmatch$factlab[i]), split = ";")[[1]],
                                                 as.factor = TRUE)
 }
+```
 
+```{r}
 ## Apply Variables Labels
 var_labs <- intersect(meta_DT$var[!is.na(meta_DT$attriblab)], names(DT))
 
