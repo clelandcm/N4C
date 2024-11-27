@@ -2651,6 +2651,310 @@ print(mytab4)
 -   Needs additional contact info (n=`r sum(pscrn$fu_form3___4 == "Checked")`)\
 -   Do not contact (n=`r sum(pscrn$fu_form3___5 == "Checked")`)
 
+# Longitudinal
+
+```{r}
+NotEligible_PostEnrollment <- c("GAR030795M", "STA031097F", "ZAJ010195M")
+```
+
+```{r}
+BL_samp <- n4c[redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & 
+    !is.na(bl_date) &
+    !(pid %in% NotEligible_PostEnrollment),.(pid)]$pid
+```
+
+```{r}
+long_VL <- n4c[grepl("Interview", redcap_event_name) & pid %in% BL_samp,
+    .(pid, redcap_event_name, blood_vl_q2, blood_vl_q3, blood_vl_q4)]
+
+long_VL[, Time := dplyr::case_when(redcap_event_name == "Baseline Interview (Arm 2: Assessments)" ~ "bl",
+                                   redcap_event_name == "Follow Up 1 Interview (Arm 2: Assessments)" ~ "fu1",
+                                   redcap_event_name == "Follow Up 2 Interview (Arm 2: Assessments)" ~ "fu2")]
+
+tbl_cross(long_VL[pid %in% BL_samp & !(is.na(blood_vl_q2))],
+          row = Time,
+          col = blood_vl_q2, 
+          label = list(Time = "Time", blood_vl_q2 = "Suppressed"),
+          percent = "row")
+```
+
+```{r}
+stig <- n4c[pid %in% BL_samp &
+            grepl("Interview", redcap_event_name), .SD, 
+            .SDcols = names(n4c) %like% "pid|stigma\\d"]
+
+stig_m <- melt(stig, measure.vars = measure(Time, Item, sep = "_stigma"), 
+               value.name = "Response") |> na.omit()
+
+stig_m[, Response_n := car::recode(Response, "'Strongly Disagree'=1;
+                                              'Disagree'=2;
+                                              'Agree'=3;
+                                              'Strongly Agree'=4;
+                                               else=NA", as.factor = FALSE)]
+```
+
+```{r}
+edd <- n4c[pid %in% BL_samp & 
+           grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|discrim\\d+$"]
+
+edd_m <- melt(edd, measure.vars = measure(Time, Item, sep = "_discrim"), 
+              value.name = "Response") |> na.omit()
+
+edd_m[, Response_n := car::recode(Response, "'Never'=1;
+                                             'Less than once a year'=2;
+                                             'A few times a year'=3;
+                                             'A few times a month'=4;
+                                             'At least once a week'=5;
+                                             'Almost everyday'=6;
+                                              else=NA", as.factor = FALSE)]
+```
+
+```{r}
+Health_SR <- n4c[pid %in% BL_samp & 
+      grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|health"] 
+
+Health_SR_m <- melt(Health_SR, measure = patterns("health1$","health2$"), 
+                    value.name = c("health1", "health2"),
+                    variable.name = "Time") |> na.omit()
+
+Health_SR_m[, Time := car::recode(Time, "1='bl';2='fu1';3='fu2'", as.factor = FALSE)]
+```
+
+```{r}
+tprov <- n4c[pid %in% BL_samp & 
+             grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|_trust\\d"]
+
+tprov_m <- melt(tprov, measure.vars = measure(Time, Item, sep = "_trust"), 
+              value.name = "Response") |> na.omit()
+
+tprov_m[Item %in% c('1','5','7','11'), 
+         Response_n := car::recode(Response, "'Strongly Disagree'=4;
+                                              'Disagree'=3;
+                                              'Neutral'=2;
+                                              'Agree'=1;
+                                              'Strongly Agree'=0;
+                                               else=NA", as.factor = FALSE)]
+
+tprov_m[!(Item %in% c('1','5','7','11')), 
+         Response_n := car::recode(Response, "'Strongly Disagree'=0;
+                                              'Disagree'=1;
+                                              'Neutral'=2;
+                                              'Agree'=3;
+                                              'Strongly Agree'=4;
+                                               else=NA", as.factor = FALSE)]
+```
+
+```{r}
+socsup <- n4c[pid %in% BL_samp &
+             grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|_mos\\d"]
+
+socsup_m <- melt(socsup, measure.vars = measure(Time, Item, sep = "_mos"), 
+              value.name = "Response") |> na.omit()
+
+socsup_m[, Response_n := car::recode(Response, "'None of the time'=0;
+                                                'A little of the time'=1;
+                                                'Some of the time'=2;
+                                                'Most of the time'=3;
+                                                'All of the time'=4;
+                                                 else=NA", as.factor = FALSE)]
+```
+
+```{r}
+resil <- n4c[pid %in% BL_samp &
+             grepl("Interview", redcap_event_name), 
+              .SD, .SDcols = names(n4c) %like% "pid|_resilience\\d+$"]
+
+resil_m <- melt(resil, measure.vars = measure(Time, Item, sep = "_resilience"), 
+              value.name = "Response") |> na.omit()
+
+resil_m[, Response_n := car::recode(Response, "'Not at all true'=0;
+                                               'Rarely true'=1;
+                                               'Sometimes true'=2;
+                                               'Often true'=3;
+                                               'True nearly all of the time'=4;
+                                                else=NA", as.factor = FALSE)]
+```
+
+```{r}
+phq <- n4c[pid %in% BL_samp &
+           grepl("Interview", redcap_event_name), 
+              .SD, .SDcols = names(n4c) %like%  "_phq\\d$|pid"]
+
+phq_m <- melt(phq, measure.vars = measure(Time, Item, sep = "_phq"), 
+              value.name = "Response") |> na.omit()
+
+phq_m[, Response_n := car::recode(Response, "'Not at all'=0;
+                                             'Several days'=1; 
+                                             'More than half the days'=2; 
+                                             'Nearly every day'=3;
+                                              else=NA", as.factor = FALSE)]
+```
+
+```{r}
+ptsd <- n4c[pid %in% BL_samp &
+           grepl("Interview", redcap_event_name), 
+              .SD, .SDcols = names(n4c) %like%  "ptsdscore|pid"]
+
+ptsd_m <- melt(ptsd, measure.vars = patterns("ptsdscore"), value.name = "PTSD_Score",
+               variable.name = "Time") |> na.omit()
+
+ptsd_m[, Time := car::recode(Time, "'ptsdscore'='bl';'fu1_ptsdscore'='fu1';'fu2_ptsdscore'='fu2'", as.factor = FALSE)]
+```
+
+```{r}
+artvas <- n4c[pid %in% BL_samp &
+           grepl("Interview", redcap_event_name), 
+              .SD, .SDcols = names(n4c) %like%  "artvas3|pid"]
+
+artvas_m <- melt(artvas, measure.vars = patterns("artvas3"), value.name = "ART_VAS",
+               variable.name = "Time") |> na.omit()
+
+artvas_m[, Time := car::recode(Time, "'bl_artvas3'='bl';'fu1_artvas3'='fu1';'fu2_artvas3'='fu2'", as.factor = FALSE)]
+```
+
+```{r}
+engage <- n4c[pid %in% BL_samp &
+              grepl("Interview", redcap_event_name), 
+              .SD, .SDcols = names(n4c) %like% "pid|_clientcare\\d"]
+
+engage_m <- melt(engage, measure.vars = measure(Time, Item, sep = "_clientcare"), 
+              value.name = "Response") |> na.omit()
+
+engage_m[,Response_n := dplyr::case_when(!(Item %in% c("2","7")) & Response == "Strongly Agree" ~ 4,
+                                         !(Item %in% c("2","7")) & Response == "Moderately Agree" ~ 3,
+                                         !(Item %in% c("2","7")) & Response == "Neither" ~ 2,
+                                         !(Item %in% c("2","7")) & Response == "Moderately Disagree" ~ 1,
+                                         !(Item %in% c("2","7")) & Response == "Strongly Disagree" ~ 0,
+                                         Item %in% c("2","7") & Response == "Strongly Agree" ~ 0,
+                                         Item %in% c("2","7") & Response == "Moderately Agree" ~ 1,
+                                         Item %in% c("2","7") & Response == "Neither" ~ 2,
+                                         Item %in% c("2","7") & Response == "Moderately Disagree" ~ 3,
+                                         Item %in% c("2","7") & Response == "Strongly Disagree" ~ 4)]
+```
+
+```{r}
+caresat <- n4c[pid %in% BL_samp &
+              grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|_spns\\d"]
+
+caresat_m <- melt(caresat, measure.vars = measure(Time, Item, sep = "_spns"), 
+              value.name = "Response") |> na.omit()
+
+caresat_m[, Response_n := car::recode(Response, "'Poor'=0;
+                                                 'Fair'=1;
+                                                 'Good'=2;
+                                                 'Very Good'=3;
+                                                 'Excellent'=4;
+                                                  else=NA", as.factor = FALSE)]
+```
+
+```{r}
+erlen_mse <- n4c[pid %in% BL_samp &
+                   grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like% "pid|_artadh\\d+$"]
+
+erlen_mse_m <- melt(erlen_mse, measure.vars = measure(Time, Item, sep = "_artadh"), 
+              value.name = "Response") |> na.omit()
+
+erlen_mse_m[, Response_n := car::recode(Response, "'10 - Totally confident'=10;
+                                                   '1 - Not at all confident'=1;
+                                                   '2'=2;
+                                                   '3'=3;
+                                                   '4'=4;
+                                                   '5'=5;
+                                                   '6'=6;
+                                                   '7'=7;
+                                                   '8'=8;
+                                                   '9'=9;
+                                                    else=NA", as.factor = FALSE)]
+```
+
+```{r}
+erlen_oe <- n4c[pid %in% BL_samp &
+                   grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like%  "pid|_artoutcome1"]
+
+erlen_oe_m <- melt(erlen_oe, measure.vars = measure(Time, Item, sep = "_artoutcome1"), 
+              value.name = "Response") |> na.omit()
+
+erlen_oe_m[, Response_n := car::recode(Response, "'10 - Totally confident'=10;
+                                                   '1 - Not at all confident'=1;
+                                                   '2'=2;
+                                                   '3'=3;
+                                                   '4'=4;
+                                                   '5'=5;
+                                                   '6'=6;
+                                                   '7'=7;
+                                                   '8'=8;
+                                                   '9'=9;
+                                                    else=NA", as.factor = FALSE)]
+
+erlen_oe_m[, Time := car::recode(Time, "'bl_q2bl'='bl'", as.factor = FALSE)]
+```
+
+```{r}
+motivation <- n4c[pid %in% BL_samp &
+                   grepl("Interview", redcap_event_name), .SD, .SDcols = names(n4c) %like%  "pid|_motivation\\d+$"]
+
+motivation_m <- melt(motivation, measure.vars = measure(Time, Item, sep = "_motivation"), 
+              value.name = "Response") |> na.omit()
+```
+
+```{r}
+DT_long <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(long_VL[!is.na(blood_vl_q2),.(pid,Time,blood_vl_q2,blood_vl_q3,blood_vl_q4)],
+            artvas_m,
+            edd_m[,.(EDS_Total = mean(Response_n, na.rm = TRUE)*9), by = .(pid,Time)],
+            tprov_m[, .(Trust_Provider = mean(Response_n, na.rm = TRUE)*11), by = .(pid,Time)],
+            stig_m[,.(Stigma = mean(Response_n, na.rm = TRUE)*10), by = .(pid,Time)],
+            socsup_m[, .(Social_Support = mean(Response_n, na.rm = TRUE)*9 / 36 * 100), by = .(pid,Time)],
+            resil_m[, .(Resilience = mean(Response_n, na.rm=TRUE)*10), by = .(pid,Time)],
+            engage_m[, .(Care_Engage = mean(Response_n, na.rm=TRUE)*8), by = .(pid,Time)],
+            caresat_m[,.(Care_Satisfaction = if (all(is.na(Response_n))) as.numeric(NA) else 
+              mean(Response_n, na.rm = TRUE)*2), by = .(pid,Time)],
+            erlen_mse_m[, .(Medication_Self_Efficacy = if (all(is.na(Response_n))) as.numeric(NA) else 
+              mean(Response_n, na.rm=TRUE)), by = .(pid,Time)],
+            erlen_oe_m[, .(Outcome_Expectancy = if (all(is.na(Response_n))) as.numeric(NA) else 
+              mean(Response_n, na.rm=TRUE)), by = .(pid,Time)],
+            motivation_m[, .(Motivation = mean(Response, na.rm=TRUE)), by = .(pid,Time)],
+            phq_m[, .(PHQ8TOT = mean(Response_n, na.rm=TRUE) * 8), by = .(pid,Time)],
+            ptsd_m,
+            Health_SR_m[,.(pid, Time, Physical_Health = health1, Mental_Health = health2)]))
+```
+
+```{r}
+DT_long[, Time := car::recode(Time, "'bl'='Baseline';
+                                     'fu1'='9M Follow-Up';
+                                     'fu2'='18M Follow-Up'",
+                              as.factor = TRUE,
+                              levels = c("Baseline","9M Follow-Up","18M Follow-Up"))]
+
+DT_long[, Physical_Health := factor(Physical_Health, levels = c("Excellent","Very good","Good","Fair","Poor","Refuse to Answer"))]
+DT_long[, Mental_Health := factor(Mental_Health, levels = c("Excellent","Very good","Good","Fair","Poor","Refuse to Answer"))]
+
+label(DT_long$blood_vl_q2) <- "HIV Viral Load Suppressed"
+label(DT_long$ART_VAS) <- "ART Adherence Visual Analog Scale"
+label(DT_long$EDS_Total) <- "Everyday Discrimination Total Score"
+label(DT_long$Trust_Provider) <- "Provider Trust"
+label(DT_long$Stigma) <- "HIV Stigma"
+label(DT_long$Social_Support) <- "Social Support"
+label(DT_long$Resilience) <- "Resilience"
+label(DT_long$Care_Engage) <- "HIV Care Engagement"
+label(DT_long$Care_Satisfaction) <- "HIV Care Satisfaction"
+label(DT_long$Medication_Self_Efficacy) <- "HIV Medication Self-Efficacy"
+label(DT_long$Outcome_Expectancy) <- "HIV Medication Outcome Expectancy"
+label(DT_long$Motivation) <- "Motivation"
+label(DT_long$PHQ8TOT) <- "PHQ8 Total Score"
+label(DT_long$PTSD_Score) <- "PTSD Score"
+label(DT_long$Physical_Health) <- "Self-Reported Physical Health"
+label(DT_long$Mental_Health) <- "Self-Reported Mental Health"
+```
+
+```{r}
+table1(~ blood_vl_q2 + ART_VAS + EDS_Total + Trust_Provider +
+         Stigma + Social_Support + Resilience + Care_Engage +
+         Care_Satisfaction + Medication_Self_Efficacy + Outcome_Expectancy +
+         Motivation + PHQ8TOT + PTSD_Score + Physical_Health + 
+         Mental_Health | Time, data = DT_long, overall = FALSE)
+```
+
 ```{r, echo=FALSE, results='hide'}
 plist <- merge(n4c[pid %in% c(Enrolled, "ELK010297M", "STA031097F") & redcap_event_name == "Baseline Interview (Arm 2: Assessments)" & !is.na(bl_date), .(pid, bl_date)], 
                n4c[pid %in% c(Enrolled, "ELK010297M", "STA031097F") & redcap_event_name == "Screen 1 (Arm 1: Screener)", 
