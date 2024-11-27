@@ -2670,12 +2670,6 @@ long_VL <- n4c[grepl("Interview", redcap_event_name) & pid %in% BL_samp,
 long_VL[, Time := dplyr::case_when(redcap_event_name == "Baseline Interview (Arm 2: Assessments)" ~ "bl",
                                    redcap_event_name == "Follow Up 1 Interview (Arm 2: Assessments)" ~ "fu1",
                                    redcap_event_name == "Follow Up 2 Interview (Arm 2: Assessments)" ~ "fu2")]
-
-tbl_cross(long_VL[pid %in% BL_samp & !(is.na(blood_vl_q2))],
-          row = Time,
-          col = blood_vl_q2, 
-          label = list(Time = "Time", blood_vl_q2 = "Suppressed"),
-          percent = "row")
 ```
 
 ```{r}
@@ -2945,6 +2939,14 @@ label(DT_long$PHQ8TOT) <- "PHQ8 Total Score"
 label(DT_long$PTSD_Score) <- "PTSD Score"
 label(DT_long$Physical_Health) <- "Self-Reported Physical Health"
 label(DT_long$Mental_Health) <- "Self-Reported Mental Health"
+```
+
+```{r}
+tbl_cross(DT_long[!(is.na(blood_vl_q2))],
+          row = Time,
+          col = blood_vl_q2, 
+          label = list(Time = "Time", blood_vl_q2 = "Suppressed"),
+          percent = "row")
 ```
 
 ```{r}
