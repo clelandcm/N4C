@@ -1,0 +1,2584 @@
+---
+title: "N4 Connect Longitudinal Summaries"
+date: '`r format(Sys.time(), "%B %d, %Y %r %Z")`'
+date-format: MMMM D, YYYY h:mm A z
+format: 
+  html:
+    theme: flatly
+    page-layout: full
+    embed-resources: true
+    toc: true
+    toc_float: 
+    collapsed: false
+    toc_depth: 5
+editor: source
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 3, fig.asp = 0.618, out.width = "100%", fig.align = "center", dev='svg')
+```
+
+```{r, results='hide'}
+library(openxlsx)
+library(tidyverse)
+library(table1)
+library(REDCapTidieR)
+library(labelled)
+library(data.table)
+library(kableExtra)
+library(pander)
+library(ggconsort)
+library(flextable)
+
+panderOptions('table.split.table', Inf)
+# gdtools::register_gfont()
+set_flextable_defaults(font.size = 12)
+```
+
+
+```{r}
+# Import N4 project data from REDCap
+options(redcaptidier.allow.mixed.structure = TRUE)
+
+tkns <- openxlsx::read.xlsx("tokens.xlsx")
+uri <- "https://redcap.nyu.edu/api/"
+token <- tkns[2,2]
+```
+
+```{r}
+N4_meta <- REDCapR::redcap_metadata_read(redcap_uri=uri, token=token)
+```
+
+```{r, results='hide'}
+N4_meta[["success"]]
+N4_meta[["data"]] |> subset(, select = "form_name") |> unique() |> as.vector()
+```
+
+```{r}
+save(list = "N4_meta", file = "N4-Meta.RData")
+```
+
+```{r}
+# > unique(meta_DT$form)
+#  [1] "unique_id"                     "screener_1"                    "screen_2_consent"             
+#  [4] "screener_2"                    "locator_form"                  "zoom_tracker_form"            
+#  [7] "study_optout_form"             "blood_draw_form"               "lab_upload_form"              
+# [10] "drug_test_form"                "baseline_consent_form"         "baseline_interview_editing"   
+# [13] "referral_form"                 "follow_up_1_interview_editing" "follow_up_2_interview"        
+# [16] "fu1_referral_form_staff"       "ema_form"                      "ema_burst_1_form"             
+# [19] "ema_burst_2_form"              "ema_burst_3_form"              "ema_burst_4_form"             
+# [22] "ema_burst_5_form"              "ema_burst_6_form"              "ema_burst_7_form"             
+# [25] "ema_burst_8_form"              "practice_ema"                  "ema_daily_assessment"         
+# [28] "ema_end_of_day_assessment"     "qi_interviews"                 "ema_optout_form_staff"        
+# [31] "study_withdrawal_form" 
+```
+
+```{r}
+N4_screen_stbl <- read_redcap(redcap_uri=uri, forms = c("screener_1",
+                                                        "screen_2_consent",
+                                                        "screener_2",
+                                                        "study_withdrawal_form"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_bl_stbl <- read_redcap(redcap_uri=uri, forms = c("baseline_interview_editing"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_fu1_stbl <- read_redcap(redcap_uri=uri, forms = c("follow_up_1_interview_editing"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_fu2_stbl <- read_redcap(redcap_uri=uri, forms = c("follow_up_2_interview"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_ema_stbl <- read_redcap(redcap_uri=uri, forms = c("ema_form",
+                                                     "ema_burst_1_form",
+                                                     "ema_burst_2_form",
+                                                     "ema_burst_3_form",
+                                                     "ema_burst_4_form",
+                                                     "ema_burst_5_form",
+                                                     "ema_burst_6_form",
+                                                     "ema_burst_7_form",
+                                                     "ema_burst_8_form",
+                                                     "ema_daily_assessment",
+                                                     "ema_end_of_day_assessment",
+                                                     "ema_optout_form_staff"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_blood_stbl <- read_redcap(redcap_uri=uri, forms = c("blood_draw_form"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_drug_stbl <- read_redcap(redcap_uri=uri, forms = c("drug_test_form"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_loc_stbl <- read_redcap(redcap_uri=uri, forms = c("locator_form"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+
+N4_other_stbl <- read_redcap(redcap_uri=uri, forms = c("zoom_tracker_form",
+                                                       "study_optout_form",
+                                                       "lab_upload_form",
+                                                       "baseline_consent_form",
+                                                       "referral_form",
+                                                       "fu1_referral_form_staff",
+                                                       "practice_ema",
+                                                       "qi_interviews"), 
+                       raw_or_label = "haven", token=token,
+                       allow_mixed_structure = TRUE)
+```
+
+
+```{r}
+N4_screen_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("screener_1",
+                      "screen_2_consent",
+                      "screener_2",
+                      "study_withdrawal_form"))
+
+N4_bl_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("baseline_interview_editing"))
+
+N4_fu1_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("follow_up_1_interview_editing"))
+
+N4_fu2_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("follow_up_2_interview"))
+
+N4_ema_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("ema_form",
+                      "ema_burst_1_form",
+                      "ema_burst_2_form",
+                      "ema_burst_3_form",
+                      "ema_burst_4_form",
+                      "ema_burst_5_form",
+                      "ema_burst_6_form",
+                      "ema_burst_7_form",
+                      "ema_burst_8_form",
+                      "ema_daily_assessment",
+                      "ema_end_of_day_assessment",
+                      "ema_optout_form_staff"))
+
+N4_blood_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("blood_draw_form"))
+
+N4_drug_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("drug_test_form"))
+
+N4_loc_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("locator_form"))
+
+N4_other_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("zoom_tracker_form",
+                      "study_optout_form",
+                      "lab_upload_form",
+                      "baseline_consent_form",
+                      "referral_form",
+                      "fu1_referral_form_staff",
+                      "practice_ema",
+                      "qi_interviews"))
+```
+
+```{r}
+blint <- baseline_interview_editing
+f1int <- follow_up_1_interview_editing
+f2int <- follow_up_2_interview
+
+rm(list = c("baseline_interview_editing",
+            "follow_up_1_interview_editing",
+            "follow_up_2_interview"))
+```
+
+```{r}
+Cohort_DT <- subset(screener_1, select = c("pid","scr1_eligibility","form_status_complete")) |> 
+  dplyr::rename(S1_Form = form_status_complete)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(screen_2_consent, select = c("pid","scr2_consent_date")),
+                   all.x = TRUE, all.y = FALSE)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(study_optout_form, select = c("pid","opt_out_date")),
+                   all.x = TRUE, all.y = FALSE)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(screener_2, select = c("pid","scr2_eligibility","form_status_complete")) |> 
+                     dplyr::rename(S2_Form = form_status_complete),
+                   all.x = TRUE, all.y = FALSE)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(baseline_consent_form, select = c("pid","enroll_consent")),
+                   all.x = TRUE, all.y = FALSE)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(blint, select = c("pid","bl_date","form_status_complete")) |>
+                     dplyr::rename(BL_Form = form_status_complete),
+                   all.x = TRUE, all.y = FALSE)
+
+Cohort_DT <- merge(Cohort_DT, 
+                   subset(blood_draw_form, redcap_event == "baseline_interview",
+                          select = c("pid","blood_vl_q2")),
+                   all.x = TRUE, all.y = FALSE)
+
+setDT(Cohort_DT)
+```
+
+```{r}
+n4c_cohort <- Cohort_DT |> 
+  cohort_start("Screen 1 Initiated<br>") |>
+    cohort_define(
+    scr1 = .full,
+    s1_e = .full |> filter(scr1_eligibility == 1 & S1_Form == 2),
+    s1_ie = .full |> filter(scr1_eligibility == 0 | S1_Form != 2),
+    scr2 = s1_e |> filter(!is.na(scr2_consent_date) & is.na(opt_out_date)),
+    s2_optout = s1_e |> filter(is.na(scr2_consent_date) | (!is.na(opt_out_date) & is.na(bl_date))),
+    s2_e = scr2 |> filter(scr2_eligibility == 1 & S2_Form == 2),
+    s2_ie = scr2 |> filter(scr2_eligibility == 0 | S2_Form != 2),
+    enrl = s2_e |> filter(enroll_consent == 1),
+    bl = .full |> filter(!is.na(bl_date)),
+    det = bl |> filter(blood_vl_q2 == 0),
+    undet = bl |> filter(blood_vl_q2 == 1)
+    ) |>
+  cohort_label(
+    scr1 = "Screen 1 Initiated<br>",
+    s1_e = "S1 Eligible<br>",
+    s1_ie = "S1 Ineligible<br>",
+    scr2 = "Screen 2 Initiated<br>",
+    s2_optout = "S2 Opted Out<br>",
+    s2_e = "S2 Eligible<br>",
+    s2_ie = "S2 Ineligible<br>",
+    enrl = "Enrolled<br>",
+    bl = "Baseline Interview<br>",
+    det = "Detectable VL<br>",
+    undet = "Undetectable VL<br>"
+  )
+```
+
+```{r}
+study_consort <- n4c_cohort |>
+  consort_box_add(
+    "scr1", 0, 50, cohort_count_adorn(n4c_cohort, scr1)
+  ) |>
+    consort_box_add(
+    "s1_e", 0, 40, cohort_count_adorn(n4c_cohort, s1_e)
+  ) |>
+    consort_box_add(
+    "s1_ie", 5, 44, cohort_count_adorn(n4c_cohort, s1_ie)
+  ) |>  
+    consort_box_add(
+    "s2_optout", 5, 33, cohort_count_adorn(n4c_cohort, s2_optout)
+  ) |>  
+    consort_box_add(
+    "scr2", 0, 30, cohort_count_adorn(n4c_cohort, scr2)
+  ) |>
+    consort_box_add(
+    "s2_ie", 5, 23, cohort_count_adorn(n4c_cohort, s2_ie)
+  ) |>    
+      consort_box_add(
+    "s2_e", 0, 20, cohort_count_adorn(n4c_cohort, s2_e)
+  ) |>    
+      consort_box_add(
+    "bl", 0, 0, cohort_count_adorn(n4c_cohort, bl)
+  ) |>    
+      consort_box_add(
+    "det", -2, 10, cohort_count_adorn(n4c_cohort, det)
+  ) |>    
+      consort_box_add(
+    "undet", 2, 10, cohort_count_adorn(n4c_cohort, undet)
+  ) |>    
+ consort_arrow_add(start = "scr1", end = "s1_e", end_side = "top") |>
+  consort_arrow_add(start_x = 0, start_y = 44, end = "s1_ie", end_side = "left") |>
+  consort_arrow_add(start_x = 0, start_y = 33, end = "s2_optout", end_side = "left") |>
+ consort_arrow_add(start = "s1_e", end = "scr2", end_side = "top") |>
+      consort_arrow_add(start_x = 0, start_y = 23, end = "s2_ie", end_side = "left") |>
+     consort_arrow_add(start = "scr2", end = "s2_e", end_side = "top") |>
+     consort_arrow_add(start = "s2_e", end = "bl", end_side = "top") |>
+  consort_arrow_add(start = "s2_e", end = "det", end_side = "top") |>
+  consort_arrow_add(start = "s2_e", end = "undet", end_side = "top")
+```
+
+```{r, include = TRUE, fig.width = 9, fig.height = 4, dev='svg'}
+study_consort |>
+  ggplot() + 
+  geom_consort() +
+  theme_consort(margin_h = 4, margin_v = 4)
+```
+
+```{r}
+Enrolled <- subset(baseline_consent_form, form_status_complete == 2)$pid
+NotEligible_PostEnrollment <- c("GAR030795M", "STA031097F", "ZAJ010195M")
+```
+
+```{r, echo=FALSE}
+Not_Withdrawn <- setdiff(Enrolled, study_withdrawal_form$pid)
+Not_Withdrawn <- setdiff(Enrolled, NotEligible_PostEnrollment)
+```
+
+```{r}
+my.contin <- function (x, ...){
+    with(stats.apply.rounding(stats.default(x), ...), c("",
+        `Mean (SD)` = sprintf("%s (%s)", MEAN, SD), 
+        `Median [Q1, Q3]` = sprintf("%s [%s, %s]", 
+            MEDIAN, Q1, Q3),
+        `Range [Min, Max]` = sprintf("[%s, %s]", MIN, MAX)))
+}
+
+my.missing <- function (x, ...){
+    with(stats.apply.rounding(stats.default(is.na(x)), ...)$Yes, 
+        c(Missing = sprintf("%s (%s%%)", FREQ, PCT)))
+}
+
+my.categ <- function (x, ...){
+    c("", sapply(stats.apply.rounding(stats.default(na.omit(x)), 
+        ...), function(y) with(y, sprintf("%s (%s%%)", 
+        FREQ, PCT))))
+}
+
+my.render <- function(x, name, missing = any(is.na(x)), transpose = F, render.empty = "NA", 
+    render.continuous = my.contin, render.categorical = my.categ, 
+    render.missing = my.missing, ...) 
+{
+    if (is.character(render.continuous)) {
+        render.continuous <- parse.abbrev.render.code(code = render.continuous, 
+            ...)
+    }
+    if (is.character(render.categorical)) {
+        render.categorical <- parse.abbrev.render.code(code = render.categorical, 
+            ...)
+    }
+    if (is.character(render.missing)) {
+        render.missing <- parse.abbrev.render.code(code = render.missing, 
+            ...)
+    }
+    if (length(x) == 0) {
+        return(render.empty)
+    }
+    if (is.logical(x)) {
+        x <- factor(x, levels = c(T, F), labels = c("Yes", 
+            "No"))
+    }
+    if (is.factor(x) || is.character(x)) {
+        r <- do.call(render.categorical, c(list(x = x), list(...)))
+    }
+    else if (is.numeric(x)) {
+        r <- do.call(render.continuous, c(list(x = x), list(...)))
+    }
+    else {
+        stop(paste("Unrecognized variable type:", class(x)))
+    }
+    if (missing) {
+        r <- c(r, do.call(render.missing, c(list(x = x), list(...))))
+    }
+    if (transpose) {
+        if (!is.null(names(r))) {
+            r <- paste0(sprintf("%s: %s", names(r), r), 
+                collapse = "<br/>")
+        }
+        else {
+            r <- paste0(r, collapse = "<br/>")
+        }
+    }
+    r
+}
+```
+
+```{r}
+setDT(screener_1)
+setDT(screener_2)
+setDT(blint)
+setDT(f1int)
+setDT(f2int)
+```
+
+```{r}
+bl_vars <- gsub("bl_", "", names(blint))
+fu1_vars <- gsub("fu1_", "", names(f1int))
+fu2_vars <- gsub("fu2_", "", names(f2int))
+
+interview_vars <- data.frame(Variable = unique(c(bl_vars, fu1_vars, fu2_vars)))
+
+setDT(interview_vars)
+
+interview_vars[, BL := Variable %in% bl_vars]
+interview_vars[, F1 := Variable %in% fu1_vars]
+interview_vars[, F2 := Variable %in% fu2_vars]
+```
+
+```{r}
+follow <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.(pid,bl_date)], 
+            f1int[pid %in% Not_Withdrawn,.(pid,fu1_date)],
+            f2int[pid %in% Not_Withdrawn,.(pid,fu2_date)])) |>
+  melt(id.vars = c("pid"), measure.vars = patterns("date$"),
+       variable.name = "Time", value.name = "Date")
+
+follow[, Time := car::recode(Time, "'bl_date'='BL';'fu1_date'='9M';'fu2_date'='18M'", 
+                             as.factor = TRUE, levels = c("BL","9M","18M"))]
+
+follow <- na.omit(follow)
+```
+
+# Follow-Up
+
+```{r}
+FUrate <- dcast(follow, pid ~ Time, value.var = "Date")
+
+setnames(FUrate, old = c("BL","9M","18M"),
+                 new = c("bl_date","f1_date","f2_date"))
+FUrate[, Days_Since_BL := as.numeric(difftime(Sys.Date(), bl_date, units = "days"))]
+
+FUrate[, Time_Cat := cut(Days_Since_BL, c(0,273,5000))]
+
+FUrate[, Time_Cat := car::recode(Time_Cat, "'(0,273]'='0-273 Days';
+                                        '(273,5e+03]'='274+ Days'", 
+                             as.factor = TRUE,
+                             levels = c('0-273 Days','274+ Days'))]
+
+FUrate <- merge(FUrate, f1int[pid %in% Not_Withdrawn,.(pid,f1complete = form_status_complete)], all=TRUE)
+FUrate <- merge(FUrate, f2int[pid %in% Not_Withdrawn,.(pid,f2complete = form_status_complete)], all=TRUE)
+
+FUrate[, FU1_Completion := ifelse(!is.na(f1complete) & 
+                                    f1complete == 2, "Yes",
+                                  ifelse(Days_Since_BL > 334, "Nine-Month Follow-Up Missed", NA))]
+
+FUrate[, FU2_Completion := ifelse(!is.na(f2complete) & 
+                                    f2complete == 2, "Yes",
+                                  ifelse(Days_Since_BL > 608, "Eighteen-Month Follow-Up Missed", NA))]
+
+label(FUrate$FU1_Completion) <- "Nine-Month Interview Completed"
+label(FUrate$FU2_Completion) <- "Eighteen-Month Interview Completed"
+```
+
+## Nine Months
+
+### Interview Completion
+
+```{r}
+table1(~ FU1_Completion, data = FUrate[!is.na(FU1_Completion)])
+```
+
+<br>
+
+-   n=`r nrow(FUrate[is.na(FU1_Completion) | FU1_Completion != "Yes" & Days_Since_BL <= 334])` pending nine-month follow-up interviews
+-   n=`r nrow(FUrate[(is.na(FU1_Completion) | FU1_Completion != "Yes") & Days_Since_BL > 334])` missed nine-month follow-up interviews
+
+## Eighteen Months
+
+### Interview Completion
+
+```{r}
+table1(~ FU2_Completion, data = FUrate[!is.na(FU2_Completion)])
+```
+
+<br>
+
+-   n=`r nrow(FUrate[is.na(FU2_Completion) | FU2_Completion != "Yes" & Days_Since_BL <= 608])` pending eighteen-month follow-up interviews
+-   n=`r nrow(FUrate[(is.na(FU2_Completion) | FU2_Completion != "Yes") & Days_Since_BL > 608])` missed eighteen-month follow-up interviews
+
+# Withdrawals
+```{r}
+table1(~ as_factor(withdrawal_form), data = study_withdrawal_form) |>
+  t1flex()
+
+```
+
+<br>
+
+-   **n=`r nrow(study_withdrawal_form)`** withdrawals from study\
+-   **n=`r sum(!(Enrolled %in% study_withdrawal_form$pid))`** enrolled participants remaining after withdrawals\
+
+# Screen 1
+
+```{r}
+label(screener_1$scr1_contact_form) <- "Filled out online contact form?"
+label(screener_1$scr1_recruit_social) <- "If called from social media advertisement, which social media platform?"
+label(screener_1$scr1_consent) <- "Do you voluntarily agree to participate in this brief research interview?"
+label(screener_1$scr1_residence) <- "Do you live in the New York City or Newark metropolitan area?"
+label(screener_1$scr1_lang) <- "Are you able to conduct research study activities in English or Spanish?"
+label(screener_1$scr1_pronouns) <- "What are your personal gender pronouns?"
+label(screener_1$scr1_covid) <- "If you are found eligible for the N4 Connect Study, are you willing to follow NYU's COVID guidelines?"
+label(screener_1$scr1_hivstat) <- "Have you been diagnosed as living with HIV?"
+```
+
+```{r}
+table1(~ scr1_contact_form + scr1_recruit + scr1_recruit_social + scr1_consent +
+         scr1_age + scr1_residence + scr1_lang + scr1_pronouns + scr1_sexbirth + 
+         scr1_covid + scr1_hivstat +
+         form_status_complete + scr1_eligibility, 
+       data = as_factor(screener_1)) |>
+  t1flex()
+
+```
+
+## Gender Identity
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for gender identity"
+
+gendID_m <- melt(screener_1[, .SD, 
+                    .SDcols = names(screener_1) %like% "^scr1_gidentity___\\d+|pid"], 
+                id.vars = "pid")
+
+gendID_m <- gendID_m[!value == FALSE,]
+gendID_m[, Ncheck := .N, by = .(pid)]
+
+gendID_m[Ncheck == 1, Gender_Identity := car::recode(variable, "'scr1_gidentity___1'='Man, male'; 
+                                                                'scr1_gidentity___2'='Woman, female';
+                                                                'scr1_gidentity___3'='Gender Non-binary';
+                                                                'scr1_gidentity___4'='Transgender';
+                                                                'scr1_gidentity___5'='Transman/ Transgender Man'; 
+                                                                'scr1_gidentity___6'='Transfemale/ Transgender Woman'; 
+                                                                'scr1_gidentity___7'='Genderqueer';
+                                                                'scr1_gidentity___8'='Genderfluid';
+                                                                'scr1_gidentity___9'='Questioning, or unsure of your gender identity';
+                                                                'scr1_gidentity___996'='None of these describe me, other';
+                                                                'scr1_gidentity___998'='Prefer not to answer'")]
+
+gendID_m[Ncheck > 1, Gender_Identity := car::recode(variable, "else='More Than One Identity'")]
+
+gendID_m <- unique(gendID_m[,.(pid, Gender_Identity)])
+```
+
+```{r}
+label(gendID_m$Gender_Identity) <- "Gender Identity"
+
+table1(~ Gender_Identity, data = gendID_m) |>
+  t1flex()
+```
+
+-   **n=`r sum(rowSums(screener_1[, .SD, .SDcols = names(screener_1) %like% "^scr1_gidentity___\\d+"]) == 0)`** participants did not check anything\
+
+## Sexual Orientation
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for sexual orientation"
+
+sexor_m <- melt(screener_1[, .SD, 
+                    .SDcols = names(screener_1) %like% "^scr1_sidentity1___\\d+|^scr1_sidentity2___\\d+|pid"], 
+                id.vars = "pid")
+
+sexor_m <- sexor_m[!value == FALSE,]
+sexor_m[, Ncheck := .N, by = .(pid)]
+
+sexor_m[Ncheck == 1, Sexual_Orientation := car::recode(variable, "'scr1_sidentity1___1'='Gay';
+                                           'scr1_sidentity1___2'='Lesbian';
+                                           'scr1_sidentity1___3'='Straight or heterosexual';
+                                           'scr1_sidentity1___4'='Bisexual';
+                                           'scr1_sidentity1___5'='Pansexual';
+                                           'scr1_sidentity1___998'='Prefer not to answer';
+                                           'scr1_sidentity2___1'='Queer';
+                                           'scr1_sidentity2___2'='Polysexual, omnisexual, sapiosexual';
+                                           'scr1_sidentity2___3'='Asexual';
+                                           'scr1_sidentity2___4'='Two-spirit';
+                                           'scr1_sidentity2___5'='Have not figured out or are in the process of figuring out your sexuality';
+                                           'scr1_sidentity2___6'='Do not think of yourself as having sexuality';
+                                           'scr1_sidentity2___7'='Do not use labels to identify yourself';
+                                           'scr1_sidentity2___996'='Other';
+                                           'scr1_sidentity2___997'='Do Not Know'")]
+
+sexor_m[Ncheck > 1, Sexual_Orientation := car::recode(variable, "else='More Than One Orientation'")]
+
+sexor_m <- unique(sexor_m[,.(pid, Sexual_Orientation)])
+```
+
+```{r}
+label(sexor_m$Sexual_Orientation) <- "Sexual Orientation"
+
+table1(~ Sexual_Orientation, data = sexor_m) |>
+  t1flex()
+
+```
+
+-   **n=`r sum(rowSums(screener_1[, .SD, .SDcols = names(screener_1) %like% "^scr1_sidentity1___\\d+|^scr1_sidentity2___\\d+"]) == 0)`** participants did not check anything\
+
+## Race/Ethnicity
+
+```{r}
+table1(~ ., data = screener_1[, .SD, .SDcols = names(screener_1) %like% "^scr1_ethnicity|^scr1_race___"]) |>
+  t1flex()
+
+```
+
+### PHS Categories
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for PHS categories"
+
+screener_1[, Hispanic := car::recode(as_factor(scr1_ethnicity), 
+                                     "'No'='Not Hispanic or Latino';'Yes'='Hispanic or Latino';else='Unknown/Not Reported Ethnicity'", as.factor = TRUE)]
+screener_1[, Hispanic := ordered(Hispanic, levels = c('Not Hispanic or Latino','Hispanic or Latino','Unknown/Not Reported Ethnicity'))]
+
+screener_1[, Racecheck := rowSums(.SD == TRUE), .SDcols = names(screener_1) %like% "^scr1_race___[1-5]"]
+screener_1[, Raceunknown := rowSums(.SD == FALSE), .SDcols = names(screener_1) %like% "^scr1_race___[1-6]"]
+screener_1[, Multirace := Racecheck > 1 | scr1_race___6 == TRUE]
+
+screener_1[, PHS_cat := case_when(
+                    scr1_race___2 == TRUE & !Multirace ~ 'American Indian/Alaska Native',
+                    scr1_race___3 == TRUE & !Multirace ~ 'Asian',
+                    scr1_race___1 == TRUE & !Multirace ~ 'Black or African American',
+                    scr1_race___5 == TRUE & !Multirace ~ 'Native Hawaiian or Other Pacific Islander',
+                    scr1_race___4 == TRUE & !Multirace ~ 'White',
+                    Multirace ~ 'More than One Race',
+                    Raceunknown == 6 ~ 'Unknown or Not Reported')]
+
+screener_1[, PHS_cat := ordered(PHS_cat, levels = c('American Indian/Alaska Native',
+                                             'Asian',
+                                             'Native Hawaiian or Other Pacific Islander',
+                                             'Black or African American',
+                                             'White',
+                                             'More than One Race',
+                                             'Unknown or Not Reported'))]
+
+label(screener_1$PHS_cat) <- "PHS Race Category"
+label(screener_1$Hispanic) <- "Ethnic Categories"
+
+setDT(blint)
+setDT(f1int)
+setDT(f2int)
+
+demog <- merge(screener_1[, .(pid, scr1_sexbirth, Hispanic, PHS_cat)],
+               blint[!is.na(bl_date),.(pid,bl_date)], 
+               all = TRUE)
+
+demog[, Enrolled := pid %in% Enrolled]
+demog[, Not_Withdrawn := pid %in% Not_Withdrawn]
+```
+
+```{r}
+gtsummary::tbl_cross(demog, row = PHS_cat, col = Hispanic) |>
+gtsummary::as_flex_table()
+```
+
+<br>
+
+```{r}
+with(as_factor(demog), 
+     table(PHS_cat, Ethnicity = Hispanic, `Assigned Sex at Birth` = scr1_sexbirth)) |> 
+  as.data.frame() |>
+  subset(Freq > 0) |>
+  dplyr::rename(`PHS Category` = PHS_cat,`Assigned Sex at Birth` = Assigned.Sex.at.Birth, Frequency = Freq) |>
+  flextable() |>
+  set_table_properties(width = 1, layout = "autofit")
+```
+
+# Screen 2
+
+```{r}
+label(screener_2$scr2_eligibility) <- "Is the participant preliminarily eligible?"
+label(screener_2$scr2_status) <- "Enter the documentation of HIV status provided"
+label(screener_2$scr2_docs) <- "Obtained copy/ photo of provided documentation?"
+label(screener_2$scr2_phone) <- "Are you willing to use your own phone or a phone provided by the project for text message interviews?"
+
+table1(~ scr2_status + scr2_docs + scr2_phone + scr2_eligibility + form_status_complete, 
+       data = as_factor(screener_2[!is.na(scr2_date),])) |>
+  t1flex()
+
+```
+
+## Opt Out
+
+```{r}
+label(study_optout_form$opt_out_reason) <- "Participation has concluded/opted-out of participation due to:"
+
+table1(~ opt_out_reason, data = as_factor(study_optout_form)) |>
+  t1flex()
+
+```
+
+# Enrollment
+
+## Total
+
+```{r, fig.width = 6, fig.asp = 0.8, out.width = "90%"}
+enroll_new <- data.frame(day = seq(as.Date("2021-12-07"), as.Date("2023-11-01"), 1))
+
+setDT(enroll_new)
+
+enroll_new <- merge(enroll_new, 
+                    blint[!is.na(bl_date), .(Enrolled = .N), by = .(bl_date)], by.x = "day", by.y = "bl_date", all=TRUE)
+
+enroll_new[is.na(Enrolled), Enrolled := 0]
+enroll_new[, Row := 1:.N]
+enroll_new[, Target := 0.4258675]
+enroll_new[, `Cumulative Enrolled` := cumsum(Enrolled)]
+enroll_new[, `Cumulative Target` := cumsum(Target)]
+enroll_new[`Cumulative Target` >= 274, `Cumulative Target` := 274]
+enroll_new[, Deficit := `Cumulative Target` - `Cumulative Enrolled`]
+
+enroll_new_m <- melt(enroll_new, id.vars = c("day","Row"), 
+                     variable.name = "type",
+                     value.name = "num")
+
+# figtop <- ceiling(enroll_new_m[day == Sys.Date() & type %in% c('Cumulative Enrolled','Cumulative Target'), .(max(num))])$V1
+# while(figtop %% 12 > 0) {figtop <- figtop + 1}
+
+figtop <- 274
+
+enroll_new_m[day > Sys.Date() & type == "Cumulative Enrolled", num := NA]
+
+ggplot(enroll_new_m[type %in% c('Cumulative Enrolled','Cumulative Target'),], 
+       aes(x = day, y = num, group = type, color = type)) + 
+  geom_path() +
+  scale_y_continuous(limits=c(0,275), breaks=seq(0,275,25)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
+  ylab("Cumulative Number Enrolled") + xlab("") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=6),
+        axis.text.y = element_text(size=6),
+        axis.title.y = element_text(size=6),
+        legend.position="bottom", 
+        legend.text=element_text(size=6),
+        legend.title = element_blank())
+```
+
+```{r}
+enroll_new[day == as.Date("2023-11-01"), .(`Cumulative Enrolled`, 
+                                `Cumulative Target` = ceiling(`Cumulative Target`), 
+                                `Current Deficit` = ceiling(Deficit))] |>
+  kbl(booktabs = T, escape = F, align = "c") |>
+  kable_paper("hover", full_width = FALSE)
+```
+
+# Baseline and Follow-Up Interviews
+
+-   Three enrolled participants disclosed information which made them no longer eligible. These three participants are excluded from summaries of interview data. 
+
+## Demographics (Baseline Sample)
+
+### Age, Sex at Birth, and Race/Ethnicity
+
+```{r}
+table1(~ ., data = as_factor(screener_1[pid %in% Not_Withdrawn, .SD, .SDcols = names(screener_1) %like% "scr1_sexbirth$|^scr1_ethnicity|^scr1_race___|scr1_age"])) |>
+  t1flex()
+
+```
+
+### PHS Categories
+
+```{r,}
+gtsummary::tbl_cross(demog[Enrolled == TRUE & !is.na(bl_date) & !(pid %in% NotEligible_PostEnrollment)], 
+                               row = PHS_cat, col = Hispanic) |>
+  gtsummary::as_flex_table()
+```
+
+<br>
+
+```{r}
+with(as_factor(demog[Enrolled == TRUE & !is.na(bl_date) & !(pid %in% NotEligible_PostEnrollment)]), 
+     table(PHS_cat, Hispanic, scr1_sexbirth)) |> 
+  as.data.frame() |>
+  subset(Freq > 0) |>
+  dplyr::rename(`PHS Category` = PHS_cat,`Assigned Sex at Birth` = scr1_sexbirth, Frequency = Freq) |>
+  flextable() |>
+    set_table_properties(width = 1, layout = "autofit")
+```
+
+### Gender Identity
+
+```{r}
+table1(~ Gender_Identity, data = gendID_m[pid %in% Not_Withdrawn]) |>
+  t1flex()
+```
+
+### Sexual Identity
+
+```{r}
+table1(~ Sexual_Orientation, data = sexor_m[pid %in% Not_Withdrawn]) |>
+  t1flex()
+
+```
+
+### Sexual or Gender Minority
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for sexual or gender minority"
+
+sexmin <- merge(gendID_m, sexor_m, all = TRUE)
+sexmin <- merge(sexmin, as_factor(screener_1[,.(pid, scr1_sexbirth)]), all=TRUE)
+
+sexmin[, SO_Minority := ifelse(Sexual_Orientation == "Straight or heterosexual", "No", "Yes")]
+sexmin[, GI_Minority := ifelse((Gender_Identity == "Man, male" & scr1_sexbirth == "Male") | 
+                               (Gender_Identity == "Woman, female" & scr1_sexbirth == "Female"), "No", "Yes")]
+```
+
+```{r}
+gtsummary::tbl_cross(sexmin[ pid %in% Not_Withdrawn,], row = SO_Minority, 
+                               col = GI_Minority, percent = "cell",
+                               label = list(SO_Minority ~ "Sexual Orientation Minority", GI_Minority ~ "Gender Minority")) |>
+gtsummary::as_flex_table()
+```
+
+### Other Demographics
+
+```{r}
+label(blint$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
+
+table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_employ4 + bl_insurance, 
+       data = as_factor(blint[pid %in% Not_Withdrawn])) |>
+  t1flex()
+
+```
+
+## Multigroup Ethnic Identity
+
+[Phinney, J. S., & Ong, A. D. (2007). Conceptualization and measurement of ethnic identity: Current status and future directions.Journal of Counseling Psychology, 54(3), 271--281. https://doi.org/10.1037/0022-0167.54.3.271](https://psycnet.apa.org/fulltext/2007-09249-006.html)
+
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for multigroup ethnic identity"
+
+MEI_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.(pid,bl_identity1,bl_identity2,bl_identity3,bl_identity4,bl_identity5,bl_identity6)], 
+            f1int[pid %in% Not_Withdrawn,.(pid,fu1_identity1,fu1_identity2,fu1_identity3,fu1_identity4,fu1_identity5,fu1_identity6)],
+            f2int[pid %in% Not_Withdrawn,.(pid,fu2_identity1,fu2_identity2,fu2_identity3,fu2_identity4,fu2_identity5,fu2_identity6)]))
+
+MEI_L <- melt(MEI_L, id.vars = "pid", 
+                 measure.vars = patterns("identity1$","identity2$","identity3$",
+                                         "identity4$","identity5$","identity6$"),
+                 variable.name = "Time", value.name = c("identity1","identity2","identity3",
+                                                        "identity4","identity5","identity6"))
+
+MEI_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+MEI_m <- melt(MEI_L, id.vars = c("pid","Time"), variable.name = "Item", value.name = "Response")
+
+MEI_m[, Response_n := ifelse(Response %in% 1:5, Response, as.integer(NA))]
+```
+
+```{r}
+table1(~ identity1 + identity2 + identity3 + identity4 + identity5 + identity6 | Time, 
+       data = as_factor(merge(na.omit(follow), MEI_L)), 
+       render = my.render, overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(MEI_m[Time == "BL",.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Sexual Orientation Identity
+
+[Toomey, R. B., Anhalt, K., & Shramko, M. (2016). An examination of the validity and reliability of a measure of sexual orientation identity exploration, resolution, and affirmation. Self and Identity, 15(4), 488-504.](https://www.tandfonline.com/doi/full/10.1080/15298868.2016.1157516)
+
+-   Items administered to the subset of participants not reporting a "straight" sexual orientation
+
+```{r}
+table1(~ bl_soidentity1 + bl_soidentity2 + bl_soidentity3 + bl_soidentity4 +
+         bl_soidentity5 + bl_soidentity6, 
+       data = as_factor(blint[pid %in% Not_Withdrawn,]), 
+       render = my.render) |>
+  t1flex()
+
+```
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for sexual orientation identity"
+
+SOI_m <- melt(blint[pid %in% Not_Withdrawn, 
+   .(pid, bl_soidentity1,bl_soidentity2,bl_soidentity3,
+          bl_soidentity4,bl_soidentity5,bl_soidentity6)],
+   id.vars = "pid", variable.name = "Item", value.name = "Response")
+
+SOI_m[, Response_n := ifelse(Response %in% 0:3, Response, as.integer(NA))]
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(SOI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Genderqueer Identity
+
+[McGuire, J. K., Beek, T. F., Catalpa, J. M., & Steensma, T. D. (2019). The Genderqueer Identity (GQI) Scale: Measurement and validation of four distinct subscales with trans and LGBQ clinical and community samples in two countries. International Journal of Transgenderism, 20(2-3), 289-304.](https://www.tandfonline.com/doi/full/10.1080/15532739.2018.1460735)
+
+-   Items administered to the subset of participants reporting a sex assigned at birth which did not match their current gender identity
+-   One item from each subscale administered
+
+```{r}
+table1(~ bl_gqidentity1 + bl_gqidentity2 + bl_gqidentity3 + bl_gqidentity4, 
+       data = as_factor(blint[pid %in% Not_Withdrawn,]), 
+       render = my.render) |>
+  t1flex()
+
+```
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for genderqueer identity"
+
+GQI_m <- melt(blint[pid %in% Not_Withdrawn, 
+   .(pid, bl_gqidentity1, bl_gqidentity2, bl_gqidentity3, bl_gqidentity4)],
+   id.vars = "pid", variable.name = "Item", value.name = "Response")
+
+GQI_m[, Response_n := ifelse(Response %in% 0:4, Response, as.integer(NA))]
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(GQI_m[,.(pid, Response_n, Item)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Physical and Mental Health
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for physical and mental health"
+
+Health_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[,.(pid,bl_health1,bl_health2)], 
+            f1int[,.(pid,fu1_health1,fu1_health2)],
+            f2int[,.(pid,fu2_health1,fu2_health2)]))
+
+Health_L <- melt(Health_L, id.vars = "pid", 
+                 measure.vars = list(c("bl_health1","fu1_health1","fu2_health1"), 
+                                     c("bl_health2","fu1_health2","fu2_health2")),
+                 variable.name = "Time", value.name = c("health1","health2"))
+
+Health_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+```
+
+```{r}
+table1(~ health1 + health2 | Time, 
+       data = na.omit(as_factor(Health_L[pid %in% Not_Withdrawn,])), 
+       overall = FALSE,
+       render = my.render) |>
+  t1flex()
+
+```
+
+
+## Diagnosis
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for HIV diagnosis"
+
+HIVdx <- merge(screener_1[pid %in% Not_Withdrawn, .(pid, scr1_age)],
+               blint[pid %in% Not_Withdrawn,.(pid, bl_date, bl_diagnosis1, 
+                                              bl_diagnosis2, bl_diagnosis3,bl_diagnosis4)])
+
+HIVdx[, Years_HIV := scr1_age - bl_diagnosis2]
+HIVdx[Years_HIV < 0, Years_HIV := 0]
+
+label(HIVdx$Years_HIV) <- "Years Living with HIV at Baseline"
+```
+
+```{r}
+table1(~ bl_diagnosis1 + bl_diagnosis2 + Years_HIV + bl_diagnosis3 + bl_diagnosis4, 
+       data = as_factor(HIVdx)) |>
+  t1flex()
+
+```
+
+## ART
+
+### Recent
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for recent ART"
+
+ARTVAS_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.(pid,bl_artvas1,bl_artvas2,bl_artvas2a,bl_artvas3)], 
+            f1int[pid %in% Not_Withdrawn,.(pid,fu1_artvas1,fu1_artvas2,fu1_artvas2a,fu1_artvas3)],
+            f2int[pid %in% Not_Withdrawn,.(pid,fu2_artvas1,fu2_artvas2,fu2_artvas2a,fu2_artvas3)]))
+
+ARTVAS_L <- melt(ARTVAS_L, id.vars = "pid", 
+                 measure.vars = patterns("vas1$","vas2$","vas2a$","vas3$"),
+                 variable.name = "Time", value.name = c("artvas1","artvas2","artvas2a","artvas3"))
+
+ARTVAS_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+ARTVAS_L <- merge(ARTVAS_L, follow[,.(pid,Time)])
+```
+
+```{r}
+table1(~ artvas2 + artvas2a + artvas3 | Time, 
+       data = merge(na.omit(follow), as_factor(ARTVAS_L[pid %in% Not_Withdrawn,])), 
+       overall = FALSE,
+       render = my.render) |>
+  t1flex()
+```
+
+### History/Current Regimen
+
+```{r}
+blint[bl_art3 == -997, bl_art3 := NA]
+
+table1(~ bl_art1 + bl_art_inj1 + bl_art2 + bl_art3 + bl_art4 + bl_art5, 
+       data = as_factor(blint[pid %in% Not_Withdrawn,])) |>
+  t1flex()
+
+```
+
+## HIV Care
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for HIV Care"
+
+HIV_Care <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[,.SD, .SDcols = names(blint) %like% "hivcare\\d+$|hivcare$|pid"], 
+            f1int[,.SD, .SDcols = names(f1int) %like% "hivcare\\d+$|hivcare$|pid"],
+            f2int[,.SD, .SDcols = names(f2int) %like% "hivcare\\d+$|hivcare$|pid"]))
+
+HIV_Care <- melt(HIV_Care, id.var = "pid",
+                 measure.vars = patterns("care$","care1$","care2$","care3$","care4$",
+                                         "care6$","care7$"),
+                 variable.name = "Time",
+                 value.name = c("hivcare","hivcare1","hivcare2","hivcare3","hivcare4",
+                                "hivcare6","hivcare7"))
+
+HIV_Care[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+HIV_Care <- merge(HIV_Care, follow[,.(pid,Time)])
+```
+
+```{r}
+table1(~ hivcare + hivcare1 + hivcare3 + hivcare4 + hivcare6 + hivcare7 | Time, 
+       data = as_factor(HIV_Care), overall = FALSE) |>
+  t1flex()
+
+```
+
+## Reasons for sometimes stopping or discontinuing ART
+
+```{r}
+table1(~ ., data = as_factor(blint[pid %in% Not_Withdrawn & bl_art1 == 1 & bl_art4 > 0, 
+                      .SD, .SDcols = names(blint) %like% "bl_stopart\\d+$"])) |>
+  t1flex()
+
+```
+
+## Reasons for never taking ART
+
+```{r}
+table1(~ ., data = as_factor(blint[pid %in% Not_Withdrawn & bl_art1 == 0, 
+                      .SD, .SDcols = names(blint) %like% "bl_neverart\\d+$"])) |>
+  t1flex()
+
+```
+
+## Motivation
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for motivation"
+
+Motivation_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[,.SD, .SDcols = names(blint) %like% "motivation\\d+$|pid"], 
+            f1int[,.SD, .SDcols = names(f1int) %like% "motivation\\d+$|pid"],
+            f2int[,.SD, .SDcols = names(f2int) %like% "motivation\\d+$|pid"]))
+
+Motivation_L <- melt(Motivation_L, id.vars = "pid", 
+                 measure.vars = patterns("n1$", "n2$", "n3$", "n4$", "n5$", 
+                                         "n6$", "n7$", "n8$", "n9$", "n10$",
+                                         "n11$", "n12$"),
+                 variable.name = "Time",
+                 value.name = paste("motivation", 1:12, sep=""))
+
+Motivation_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+Motivation_L <- merge(follow[,.(pid,Time)], Motivation_L)
+
+table1(~ motivation1 + motivation2 + motivation3 + motivation4 + motivation5 + motivation6 + 
+         motivation7 + motivation8 + motivation9 + motivation10 + motivation11 + motivation12 | Time, 
+       data = merge(na.omit(follow), as_factor(Motivation_L[pid %in% Not_Withdrawn,])), 
+       overall = FALSE,
+       render = my.render) |>
+  t1flex()
+
+```
+
+## Life Outcome Expectancies
+
+[Hussen, S. A., Harper, G. W., Bauermeister, J. A., Hightow-Weidman, L. B., & Adolescent Medicine Trials Network for HIV/AIDS Interventions. (2015). Psychosocial influences on engagement in care among HIV-positive young black gay/bisexual and other men who have sex with men. AIDS patient care and STDs, 29(2), 77-85.](https://www.liebertpub.com/doi/full/10.1089/apc.2014.0117)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for life outcome expectancies"
+
+LifeOutcome_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_outcome\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_outcome\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_outcome\\d+$|pid"]))
+
+LifeOutcome_L <- melt(LifeOutcome_L, id.vars = "pid",
+                      measure.vars = patterns("me1$","me2$","me3$","me4$","me5$","me6$",
+                                              "me7$","me8$","me9$","me10$","me11$","me12$"),
+                      variable.name = "Time",
+                      value.name = paste("outcome", 1:12, sep=""))
+
+LifeOutcome_L[is.na(outcome11) & outcome10 == 4, outcome11 := 4]
+LifeOutcome_L[is.na(outcome12) & outcome11 == 4, outcome12 := 4]
+
+LifeOutcome_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+LifeOutcome_L <- merge(LifeOutcome_L, follow[,.(pid,Time)])
+```
+
+```{r}
+table1(~ .| Time, data = as_factor(LifeOutcome_L[, .SD, .SDcols = names(LifeOutcome_L) %like% "outcome\\d|Time"]), 
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+## IPV
+
+[Goldenberg, T., Jadwin-Cakmak, L., & Harper, G. W. (2018). Intimate partner violence among transgender youth: Associations with intrapersonal and structural factors. Violence and gender, 5(1), 19-25.](https://www.liebertpub.com/doi/full/10.1089/vio.2017.0041)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for IPV"
+
+IPV_L <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_ipv\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_ipv\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_ipv\\d+$|pid"]))
+
+IPV_L <- melt(IPV_L, id.vars = "pid",
+              measure.vars = patterns("ipv1$","ipv2$","ipv3$","ipv4$"),
+              variable.name = "Time",
+              value.name = c("ipv1","ipv2","ipv3","ipv4"))
+
+IPV_L[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+IPV_L[is.na(ipv3) & ipv1 == 0, ipv3 := 0]
+IPV_L[is.na(ipv4) & ipv2 == 0, ipv4 := 0]
+
+IPV_L <- merge(IPV_L, na.omit(follow))
+
+table1(~ .| Time, data = as_factor(IPV_L[, .SD, .SDcols = names(IPV_L) %like% "ipv\\d|Time"]), 
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+## Social Support
+
+[Sherbourne, C. D., & Stewart, A. L. (1991). The MOS social support survey. Social science & medicine, 32(6), 705-714.](https://www.sciencedirect.com/science/article/abs/pii/027795369190150B)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for social support"
+
+socsup <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_mos\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_mos\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_mos\\d+$|pid"]))
+
+socsup <- melt(socsup, id.vars = "pid",
+               measure.vars = patterns("mos1$","mos2$","mos3$","mos4$","mos5$","mos6$","mos7$","mos8$","mos9$"),
+               variable.name = "Time",
+               value.name = paste("mos", 1:9, sep = ""))
+
+socsup[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+socsup <- merge(na.omit(follow), socsup)
+
+socsup_m <- melt(socsup, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+socsup_m[, Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+
+socsup <- merge(socsup,
+      socsup_m[, .(Social_Support = mean(Response_n, na.rm = TRUE)*9 / 36 * 100), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(socsup$Social_Support) <- "Social Support Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(socsup[, .SD, .SDcols = names(socsup) %like% "mos\\d|Support|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(socsup_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Everyday Discrimination
+
+[Williams, D. R., Yu, Y., Jackson, J. S., & Anderson, N. B. (1997). Racial differences in physical and mental health: Socio-economic status, stress and discrimination. Journal of health psychology, 2(3), 335-351.](https://journals.sagepub.com/doi/abs/10.1177/135910539700200305)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for everyday discrimination"
+
+edd <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_discrim\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_discrim\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_discrim\\d+$|pid"]))
+
+edd <- melt(edd, id.vars = "pid",
+               measure.vars = patterns("discrim1$","discrim2$","discrim3$","discrim4$","discrim5$",
+                                       "discrim6$","discrim7$","discrim8$","discrim9$"),
+               variable.name = "Time",
+               value.name = paste("discrim", 1:9, sep = ""))
+
+edd[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+edd <- merge(na.omit(follow), edd)
+
+edd_m <- melt(edd, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+edd_m[, Response_n := ifelse(Response %in% 1:6, Response, as.integer(NA))]
+
+edd <- merge(edd,
+      edd_m[, .(Everyday_Discrimination = mean(Response_n, na.rm = TRUE)*9), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(edd$Everyday_Discrimination) <- "Everyday Discrimination Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(edd[, .SD, .SDcols = names(edd) %like% "discrim\\d+$|Discrim|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(edd_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## HIV Stigma
+
+[Wright, K., Naar-King, S., Lam, P., Templin, T., & Frey, M. (2007). Stigma scale revised: reliability and validity of a brief measure of stigma for HIV+ youth. Journal of adolescent health, 40(1), 96-98.](https://www.sciencedirect.com/science/article/pii/S1054139X06003004)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for HIV stigma"
+
+stig <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_stigma\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_stigma\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_stigma\\d+$|pid"]))
+
+stig <- melt(stig, id.vars = "pid",
+               measure.vars = patterns("stigma1$","stigma2$","stigma3$","stigma4$","stigma5$",
+                                       "stigma6$","stigma7$","stigma8$","stigma9$","stigma10$"),
+               variable.name = "Time",
+               value.name = paste("stigma", 1:10, sep = ""))
+
+stig[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+stig <- merge(na.omit(follow), stig)
+
+stig_m <- melt(stig, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+stig_m[, Response_n := ifelse(Response %in% 1:4, Response, as.integer(NA))]
+
+stig <- merge(stig,
+      stig_m[, .(HIV_Stigma = mean(Response_n, na.rm = TRUE)*10), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(stig$HIV_Stigma) <- "HIV Stigma Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(stig[, .SD, .SDcols = names(stig) %like% "stigma\\d+$|Stigma|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(stig_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Client Engagement in HIV Care
+
+[Yatchmenoff, D. K. (2005). Measuring client engagement from the client's perspective in nonvoluntary child protective services. Research on social work practice, 15(2), 84-96.](https://journals.sagepub.com/doi/abs/10.1177/1049731504271605)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for client engagement in HIV care"
+
+engage <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_clientcare\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_clientcare\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_clientcare\\d+$|pid"]))
+
+engage <- melt(engage, id.vars = "pid",
+               measure.vars = patterns("clientcare1$","clientcare2$","clientcare3$","clientcare4$",
+                                       "clientcare5$","clientcare6$","clientcare7$","clientcare8$"),
+               variable.name = "Time",
+               value.name = paste("clientcare", 1:8, sep = ""))
+
+engage[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+engage <- merge(na.omit(follow), engage)
+
+engage_m <- melt(engage, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+engage_m[, Item := as.numeric(gsub("clientcare","",Item))]
+engage_m[Item %in% c(1,3,4,5,6,8), Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+engage_m[Item %in% c(2,7), Response_n := ifelse(Response %in% 1:5, 4 - (Response - 1), as.integer(NA))]
+
+engage <- merge(engage,
+      engage_m[, .(Care_Engage = mean(Response_n, na.rm = TRUE)*8), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(engage$Care_Engage) <- "HIV Care Engagement Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(engage[, .SD, .SDcols = names(engage) %like% "clientcare\\d|Engage|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(engage_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## HIV Care Satisfaction
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for HIV care satisfaction"
+
+caresat <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_spns\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_spns\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_spns\\d+$|pid"]))
+
+caresat <- melt(caresat, id.vars = "pid",
+               measure.vars = patterns("spns1$","spns2$"),
+               variable.name = "Time",
+               value.name = paste("spns", 1:2, sep = ""))
+
+caresat[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+caresat <- merge(na.omit(follow), caresat)
+
+caresat_m <- melt(caresat, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+caresat_m[, Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+
+caresat <- merge(caresat,
+      caresat_m[, .(Care_Satisfaction = mean(Response_n, na.rm = TRUE)*2), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(caresat$Care_Satisfaction) <- "HIV Care Satisfaction Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(caresat[, .SD, .SDcols = names(caresat) %like% "spns\\d|Satis|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(caresat_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## Trust in Provider
+
+[Anderson, L. A., & Dedrick, R. F. (1990). Development of the Trust in Physician scale: a measure to assess interpersonal trust in patient-physician relationships. Psychological reports, 67(3_suppl), 1091-1100.](https://journals.sagepub.com/doi/abs/10.2466/pr0.1990.67.3f.1091)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for trust in provider"
+
+trust <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_trust\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_trust\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_trust\\d+$|pid"]))
+
+trust <- melt(trust, id.vars = "pid",
+               measure.vars = patterns("trust1$","trust2$","trust3$","trust4$",
+                                       "trust5$","trust6$","trust7$","trust8$",
+                                       "trust9$","trust10$","trust11$"),
+               variable.name = "Time",
+               value.name = paste("trust", 1:11, sep = ""))
+
+trust[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+trust <- merge(na.omit(follow), trust)
+
+trust_m <- melt(trust, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+trust_m[, Item := as.numeric(gsub("trust","",Item))]
+trust_m[Item %in% c(2,3,4,6,7,9,10), Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+trust_m[Item %in% c(1,5,7,11), Response_n := ifelse(Response %in% 1:5, 4 - (Response - 1), as.integer(NA))]
+
+trust <- merge(trust,
+      trust_m[, .(Provider_Trust = mean(Response_n, na.rm = TRUE)*11), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(trust$Provider_Trust) <- "Provider Trust Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(trust[, .SD, .SDcols = names(trust) %like% "trust\\d|Trust|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(trust_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## ART Outcome Expectancies
+
+[Erlen, J. A., Cha, E. S., Kim, K. H., Caruthers, D., & Sereika, S. M. (2010). The HIV Medication Taking Self‐efficacy Scale: Psychometric evaluation. Journal of advanced nursing, 66(11), 2560-2572.](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1365-2648.2010.05400.x)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for ART outcome expectancies"
+
+erlen_oe <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_artoutcome1[a-g]$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_artoutcome1[a-g]$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_artoutcome1[a-g]_v2|pid"]))
+
+erlen_oe <- melt(erlen_oe, id.vars = "pid",
+               measure.vars = patterns("1a","1b","1c","1d",
+                                       "1e","1f","1g"),
+               variable.name = "Time",
+               value.name = paste("artoutcome1", letters[1:7], sep = ""))
+
+erlen_oe[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+erlen_oe <- merge(na.omit(follow), erlen_oe)
+
+erlen_oe_m <- melt(erlen_oe, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+erlen_oe_m[, Response_n := ifelse(Response %in% 1:10, Response, as.integer(NA))]
+
+erlen_oe <- merge(erlen_oe,
+      erlen_oe_m[, .(Outcome_Expectancy = mean(Response_n, na.rm = TRUE)), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(erlen_oe$Outcome_Expectancy) <- "ART Outcome Expectancy Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(erlen_oe[, .SD, .SDcols = names(erlen_oe) %like% "come1[a-g]|Expect|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(erlen_oe_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## ART Self-Efficacy
+
+[Erlen, J. A., Cha, E. S., Kim, K. H., Caruthers, D., & Sereika, S. M. (2010). The HIV Medication Taking Self‐efficacy Scale: Psychometric evaluation. Journal of advanced nursing, 66(11), 2560-2572.](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1365-2648.2010.05400.x)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for ART self-efficacy"
+
+erlen_mse <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_artadh\\d|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_artadh\\d|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_artadh\\d|pid"]))
+
+erlen_mse <- melt(erlen_mse, id.vars = "pid",
+               measure.vars = patterns("adh1$","adh2$","adh3$","adh4$","adh5$",
+                                       "adh6$","adh7$","adh8$","adh9$","adh10$",
+                                       "adh11$","adh12$","adh13$","adh14$","adh15$"),
+               variable.name = "Time",
+               value.name = paste("artadh", 1:15, sep = ""))
+
+erlen_mse[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+erlen_mse <- merge(na.omit(follow), erlen_mse)
+
+erlen_mse_m <- melt(erlen_mse, id.vars = c("pid","Time","Date"),
+                 variable.name = "Item", value.name = "Response")
+
+erlen_mse_m[, Response_n := ifelse(Response %in% 1:10, Response, as.integer(NA))]
+
+erlen_mse <- merge(erlen_mse,
+      erlen_mse_m[, .(Medication_Self_Efficacy = mean(Response_n, na.rm = TRUE)), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(erlen_mse$Medication_Self_Efficacy) <- "ART Medication Self Efficacy Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(erlen_mse[, .SD, .SDcols = names(erlen_mse) %like% "adh\\d$|Efficacy|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(erlen_mse_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## ACES
+
+[Finkelhor, D., Shattuck, A., Turner, H., & Hamby, S. (2015). A revised inventory of adverse childhood experiences. Child abuse & neglect, 48, 13-21.](https://www.sciencedirect.com/science/article/pii/S0145213415002409)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for ACES"
+
+ACES <- blint[pid %in% Not_Withdrawn, .SD, .SDcols = names(blint) %like% "pid|bl_aces\\d"]
+
+ACES[, Eabuse := ifelse(bl_aces1 == 1 | bl_aces2 == 1, "Yes", "No")]
+ACES[, Pabuse := ifelse(bl_aces3 == 1 | bl_aces4 == 1, "Yes", "No")]
+ACES[, Sassault := ifelse(bl_aces5 == 1 | bl_aces6 == 1, "Yes", "No")]
+ACES[, Eneglect := ifelse(bl_aces7 == 1 | bl_aces8 == 1, "Yes", "No")]
+ACES[, Pneglect := ifelse(bl_aces9 == 1 | bl_aces10 == 1, "Yes", "No")]
+ACES[, Pardivsep := ifelse(bl_aces11 == 1, "Yes", "No")]
+ACES[, Mothviol := ifelse(bl_aces12 == 1 | bl_aces13 == 1 | bl_aces14 == 1, "Yes", "No")] 
+ACES[, FamSU := ifelse(bl_aces15 == 1, "Yes", "No")] 
+ACES[, FamMH := ifelse(bl_aces16 == 1, "Yes", "No")]
+ACES[, Parprison := ifelse(bl_aces17 == 1, "Yes", "No")]
+ACES[, LowSES := ifelse(bl_aces21 == 1, "Yes", "No")]
+ACES[, peervic := ifelse(bl_aces18 == 1, "Yes", "No")]
+ACES[, peerisol := ifelse(bl_aces19 == 1, "Yes", "No")]
+ACES[, Commviol := ifelse(bl_aces20 == 1, "Yes", "No")]
+
+ACES_cols <- c("pid","Eabuse","Pabuse","Sassault","Eneglect",
+               "Pneglect","Pardivsep","Mothviol","FamSU","FamMH",
+               "Parprison","LowSES","peervic","peerisol","Commviol")
+
+ACES_m <- melt(ACES[, .SD, .SDcols = ACES_cols], id.vars = "pid")
+
+ACES <- merge(ACES, ACES_m[, .(ACES_sum = sum(value == "Yes")), by = .(pid)])
+
+label(ACES$ACES_sum) <- "ACES Sum (0-14)"
+```
+
+```{r}
+table1(~ ., data = as_factor(ACES[, .SD, .SDcols = names(ACES) %like% "bl_aces\\d|ACES_sum"])) |>
+  t1flex()
+
+```
+
+## Social Network Members
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for social network members"
+
+snet <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "person[1-5][a-n]|person[1-5]|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "person[1-5][a-n]|person[1-5]|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "person[1-5][a-n]|person[1-5]|pid"]))
+
+sn <- melt(snet, id.vars = c("pid"),
+              measure.vars = patterns("son1$","son2$","son3$","son4$","son5$",
+                         "son1a$","son2a$","son3a$","son4a$","son5a$",
+                         "son1b$","son2b$","son3b$","son4b$","son5b$",
+                         "son1c___1$","son2c___1$","son3c___1$","son4c___1$","son5c___1$",   
+                         "son1c___2$","son2c___2$","son3c___2$","son4c___2$","son5c___2$",
+                         "son1c___3$","son2c___3$","son3c___3$","son4c___3$","son5c___3$",
+                         "son1c___996$","son2c___996$","son3c___996$","son4c___996$","son5c___996$",
+                         "son1c___997$","son2c___997$","son3c___997$","son4c___997$","son5c___997$",
+                         "son1c___998$","son2c___998$","son3c___998$","son4c___998$","son5c___998$",
+                         "son1c_oth$","son2c_oth$","son3c_oth$","son4c_oth$","son5c_oth$",
+                         "son1d$","son2d$","son3d$","son4d$","son5d$",
+                         "son1e___1$","son2e___1$","son3e___1$","son4e___1$","son5e___1$",   
+                         "son1e___2$","son2e___2$","son3e___2$","son4e___2$","son5e___2$",
+                         "son1e___3$","son2e___3$","son3e___3$","son4e___3$","son5e___3$",
+                         "son1e___4$","son2e___4$","son3e___4$","son4e___4$","son5e___4$",
+                         "son1e___5$","son2e___5$","son3e___5$","son4e___5$","son5e___5$",
+                         "son1e___996$","son2e___996$","son3e___996$","son4e___996$","son5e___996$",
+                         "son1e___997$","son2e___997$","son3e___997$","son4e___997$","son5e___997$",
+                         "son1e___998$","son2e___998$","son3e___998$","son4e___998$","son5e___998$",
+                         "son1e_oth$","son2e_oth$","son3e_oth$","son4e_oth$","son5e_oth$",
+                         "son1f$","son2f$","son3f$","son4f$","son5f",
+                         "son1g$","son2g$","son3g$","son4g$","son5g$",
+                         "son1h$","son2h$","son3h$","son4h$","son5h$",
+                         "son1i$","son2i$","son3i$","son4i$","son5i$",
+                         "son1j$","son2j$","son3j$","son4j$","son5j$",
+                         "son1k$","son2k$","son3k$","son4k$","son5k$",
+                         "son1l$","son2l$","son3l$","son4l$","son5l$",
+                         "son1m$","son2m$","son3m$","son4m$","son5m$",
+                         "son1n$","son2n$","son3n$","son4n$","son5n$"),
+     value.name = c("sn1_name","sn2_name","sn3_name","sn4_name","sn5_name", 
+                    "sn1_a","sn2_a","sn3_a","sn4_a","sn5_a",
+                    "sn1_b","sn2_b","sn3_b","sn4_b","sn5_b",
+                    "sn1_c_1","sn2_c_1","sn3_c_1","sn4_c_1","sn5_c_1",
+                    "sn1_c_2","sn2_c_2","sn3_c_2","sn4_c_2","sn5_c_2",
+                    "sn1_c_3","sn2_c_3","sn3_c_3","sn4_c_3","sn5_c_3",
+                    "sn1_c_996","sn2_c_996","sn3_c_996","sn4_c_996","sn5_c_996",
+                    "sn1_c_997","sn2_c_997","sn3_c_997","sn4_c_997","sn5_c_997",
+                    "sn1_c_998","sn2_c_998","sn3_c_998","sn4_c_998","sn5_c_998",
+                    "sn1_c_oth","sn2_c_oth","sn3_c_oth","sn4_c_oth","sn5_c_oth",
+                    "sn1_d","sn2_d","sn3_d","sn4_d","sn5_d",
+                    "sn1_e_1","sn2_e_1","sn3_e_1","sn4_e_1","sn5_e_1",
+                    "sn1_e_2","sn2_e_2","sn3_e_2","sn4_e_2","sn5_e_2",
+                    "sn1_e_3","sn2_e_3","sn3_e_3","sn4_e_3","sn5_e_3",
+                    "sn1_e_4","sn2_e_4","sn3_e_4","sn4_e_4","sn5_e_4",
+                    "sn1_e_5","sn2_e_5","sn3_e_5","sn4_e_5","sn5_e_5",
+                    "sn1_e_996","sn2_e_996","sn3_e_996","sn4_e_996","sn5_e_996",
+                    "sn1_e_997","sn2_e_997","sn3_e_997","sn4_e_997","sn5_e_997",
+                    "sn1_e_998","sn2_e_998","sn3_e_998","sn4_e_998","sn5_e_998",
+                    "sn1_e_oth","sn2_e_oth","sn3_e_oth","sn4_e_oth","sn5_e_oth",
+                    "sn1_f","sn2_f","sn3_f","sn4_f","sn5_f",
+                    "sn1_g","sn2_g","sn3_g","sn4_g","sn5_g",
+                    "sn1_h","sn2_h","sn3_h","sn4_h","sn5_h",
+                    "sn1_i","sn2_i","sn3_i","sn4_i","sn5_i",
+                    "sn1_j","sn2_j","sn3_j","sn4_j","sn5_j",
+                    "sn1_k","sn2_k","sn3_k","sn4_k","sn5_k",
+                    "sn1_l","sn2_l","sn3_l","sn4_l","sn5_l",
+                    "sn1_m","sn2_m","sn3_m","sn4_m","sn5_m",
+                    "sn1_n","sn2_n","sn3_n","sn4_n","sn5_n"),
+     variable.name = "Time")
+
+sn <- melt(sn, id.vars = c("pid","Time"),
+           measure.vars = patterns("name$", "_a$","_b$","_c_1$","_c_2$","_c_3$","_c_996$","_c_997$","_c_998$","_c_oth$",
+                                   "_d$","_e_1$","_e_2$","_e_3$","_e_4$","_e_5$","_e_996$","_e_997$","_e_998$",
+                                   "_e_oth$","_f$","_g$","_h$","_i$","_j$","_k$","_l$","_m$","_n$"),
+           variable.name = "Person",
+           value.name = c("sn_name", "sn_a","sn_b","sn_c_1","sn_c_2","sn_c_3","sn_c_996","sn_c_997","sn_c_998","sn_c_oth",
+                    "sn_d","sn_e_1","sn_e_2","sn_e_3","sn_e_4","sn_e_5","sn_e_996","sn_e_997","sn_e_998",
+                    "sn_e_oth","sn_f","sn_g","sn_h","sn_i","sn_j","sn_k","sn_l","sn_m","sn_n"))
+
+sn[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+sn <- sn[!(sn_name == "998" | is.na(sn_name)),]
+
+sn <- merge(sn, follow[,.(pid,Time)])
+
+plev <- sn[, .(Npeople = factor(.N, levels=c("1","2","3","4","5")),
+                  Any_HIV = any(sn_g == 1),
+                  Any_CJI = any(sn_i == 1),
+                  Any_ISU = any(sn_j == 1),
+                  Any_SCH = any(sn_k == 1),
+                  Any_WRK = any(sn_l == 1),
+                  Any_PRT = any(sn_a %in% 
+                                  c(1,2))), by = .(pid,Time)]
+
+label(plev$Npeople) <- "Number of people listed"
+label(plev$Any_HIV) <- "Any Network Members Diagnosed with HIV"
+label(plev$Any_CJI) <- "Any Network Members with Criminal Justice System Involvement"
+label(plev$Any_ISU) <- "Any Network Members with Illicit/Unprescribed Drug Use"
+label(plev$Any_SCH) <- "Any Network Members in School"
+label(plev$Any_WRK) <- "Any Network Members Working a Job on the Books"
+label(plev$Any_PRT) <- "Any Network Members Who Are Romantic or Sex Partner"
+```
+
+### Participant Summaries
+
+```{r}
+table1(~ Npeople + Any_HIV + Any_CJI + Any_ISU +
+         Any_SCH + Any_WRK + Any_PRT | Time, data = plev,
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+### Network Member Summaries
+
+```{r}
+table1(~ sn_b + sn_c_1 + sn_c_2 + sn_c_3 + sn_f +
+         sn_e_1 + sn_e_2 + sn_e_3 + sn_e_4 + sn_e_5 +
+         sn_a + sn_d + sn_g +
+         sn_h + sn_k + sn_l + sn_m + sn_n | Time, 
+       data = as_factor(sn),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+## STI
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for STI"
+
+STI <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "sti\\d|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "sti\\d|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "sti\\d|pid"]))
+
+STI <- melt(STI, id.vars = "pid",
+            measure.vars = patterns("1a","1b","1c","1d","1e","1f","1g","1h","1i","1_oth",
+                                    "2a","2b","2c","2d","2e","2f","2g","2h","2i"),
+            variable.name = "Time",
+            value.name = c("sti1a","sti1b","sti1c","sti1d","sti1e","sti1f","sti1g","sti1h","sti1i","sti1_oth",
+                           "sti2a","sti2b","sti2c","sti2d","sti2e","sti2f","sti2g","sti2h","sti2i"))
+
+STI[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+STI <- merge(STI, follow[,.(pid,Time)])
+```
+
+### Lifetime (Baseline)
+
+```{r}
+table1(~ sti1a + sti1b + sti1c + sti1d +
+         sti1e + sti1f + sti1g + sti1h | Time, 
+       data = as_factor(STI[Time == "BL"]), 
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+### Past Year
+```{r}
+table1(~ sti2a + sti2b + sti2c + sti2d +
+         sti2e + sti2f + sti2g + sti2h | Time, 
+       data = as_factor(STI), 
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+# WHO ASSIST
+
+* WHO ASSIST Working Group (2002). The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): development, reliability and feasibility. _Addiction_, 97 (9): 1183-1194.
+
+* Humeniuk RE, Ali RA, Babor TF, Farrell M, Formigoni ML, Jittiwutikarn J, Boerngen de Larcerda R, Ling W, Marsden J, Monteiro M, Nhiwhatiwa S, Pal H, Poznyak V & Simon S (2008). Validation of the Alcohol Smoking and Substance Involvement Screening Test (ASSIST). _Addiction_ 103(6): 1039-1047.
+
+* Humeniuk RE, Henry-Edwards S, Ali RL, Poznyak V and Monteiro M (2010). _The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): manual for use in primary care_. Geneva, World Health Organization.
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for WHO ASSIST"
+
+whoa <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "pid|whoassist[1-7][a-l]$"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "pid|whoassist[1-7][a-l]$"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "pid|whoassist[1-7][a-l]$"]))
+
+whoa <- melt(whoa, id.vars = "pid",
+             measure.vars = patterns("1a$","1b$","1c$","1d$","1e$","1f$","1g$","1h$","1i$","1j$","1k$","1l$",
+                                     "2a$","2b$","2c$","2d$","2e$","2f$","2g$","2h$","2i$","2j$","2k$","2l$",
+                                     "3a$","3b$","3c$","3d$","3e$","3f$","3g$","3h$","3i$","3j$","3k$","3l$",
+                                     "4a$","4b$","4c$","4d$","4e$","4f$","4g$","4h$","4i$","4j$","4k$","4l$",
+                                     "5a$","5b$","5c$","5d$","5e$","5f$","5g$","5h$","5i$","5j$","5k$","5l$",
+                                     "6a$","6b$","6c$","6d$","6e$","6f$","6g$","6h$","6i$","6j$","6k$","6l$",
+                                     "7a$","7b$","7c$","7d$","7e$","7f$","7g$","7h$","7i$","7j$","7k$","7l$"),
+             variable.name = "Time",
+             value.name = paste(rep(paste("Q", 1:7, sep=""), each = 12), letters[1:12], sep=""))
+
+whoa <- melt(whoa, id.vars = c("pid","Time"),
+           measure.vars = patterns("^Q1","^Q2","^Q3","^Q4","^Q5","^Q6","^Q7"),
+           variable.name = "Substance",
+     value.name = c("Q1","Q2","Q3","Q4","Q5","Q6","Q7"))
+
+whoa[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+whoa[, Substance := car::recode(Substance, "1='tob';
+                                            2='alc';
+                                            3='can';
+                                            4='coc';
+                                            5='pstm';
+                                            6='mthp';
+                                            7='inh';
+                                            8='sed';
+                                            9='hal';
+                                           10='popi';
+                                           11='sopi';
+                                           12='oth'", as.factor = TRUE,
+                                     levels = c('tob','alc','can','coc','pstm','mthp','inh','sed','hal','popi','sopi','oth'))]
+
+whoa <- merge(whoa, 
+              na.omit(follow[,.(pid,Time)]))
+
+whoa[Q1 == 0, Q2 := 1] # Recent use set to never if never used
+whoa[Q1 == 0, Q6 := 1] # Concern set to never if never used
+whoa[Q1 == 0, Q7 := 1] # Cut down set to never if never used
+whoa[Q1 == 0 | Q2 == 1, Q3 := 1] # Urge set to never if no recent use
+whoa[Q1 == 0 | Q2 == 1, Q4 := 1] # Problems set to never if no recent use
+whoa[Q1 == 0 | Q2 == 1, Q5 := 1] # Failed set to never if no recent use
+whoa[Substance == "tob", Q5 := 1] # Failed set to never for tobacco
+
+whoa[, Use_P3M_num := case_when(
+            Q2 == 1 ~ '0',
+            Q2 == 2 ~ '2',
+            Q2 == 3 ~ '3',
+            Q2 == 4 ~ '4',
+            Q2 == 5 ~ '6',
+            is.na(Q2) ~ '0')]
+
+whoa[, Urge_P3M_num := case_when(
+            Q3 == 1 ~ '0',
+            Q3 == 2 ~ '3',
+            Q3 == 3 ~ '4',
+            Q3 == 4 ~ '5',
+            Q3 == 5 ~ '6',
+            is.na(Q3) ~ '0')]
+
+whoa[, Problems_P3M_num := case_when(
+            Q4 == 1 ~ '0',
+            Q4 == 2 ~ '4',
+            Q4 == 3 ~ '5',
+            Q4 == 4 ~ '6',
+            Q4 == 5 ~ '7',
+            is.na(Q4) ~ '0')]
+
+whoa[, Failed_P3M_num := case_when(
+        Substance == 'tob' ~ '0',
+            Q5 == 1 & Substance != 'oth' ~ '0',
+            Q5 == 2 & Substance != 'oth' ~ '5',
+            Q5 == 3 & Substance != 'oth' ~ '6',
+            Q5 == 4 & Substance != 'oth' ~ '7',
+            Q5 == 5 & Substance != 'oth' ~ '8',
+            Q5 == 1 & Substance == 'oth' ~ '0',
+            Q5 == 2 & Substance == 'oth' ~ '4',
+            Q5 == 3 & Substance == 'oth' ~ '5',
+            Q5 == 4 & Substance == 'oth' ~ '6',
+            Q5 == 5 & Substance == 'oth' ~ '7',
+            is.na(Q5) ~ '0')]
+
+whoa[, Concern_Ever_num := case_when(
+            Use_P3M_num == 0 ~ '0',
+            Q6 == 1 ~ '0',
+            Q6 == 2 ~ '3',
+            Q6 == 3 ~ '6',
+            is.na(Q6) ~ '0')]
+
+whoa[, Cut_Down_Ever_num := case_when(
+            Use_P3M_num == 0 ~ '0',
+            Q7 == 1 ~ '0',
+            Q7 == 2 ~ '3',
+            Q7 == 3 ~ '6',
+            is.na(Q7) ~ '0')]
+
+whoa[, Use_P3M_num := as.numeric(Use_P3M_num)]
+whoa[, Urge_P3M_num := as.numeric(Urge_P3M_num)]
+whoa[, Problems_P3M_num := as.numeric(Problems_P3M_num)]
+whoa[, Failed_P3M_num := as.numeric(Failed_P3M_num)]
+whoa[, Concern_Ever_num := as.numeric(Concern_Ever_num)]
+whoa[, Cut_Down_Ever_num := as.numeric(Cut_Down_Ever_num)]
+
+whoa[, Risk_Score := Use_P3M_num + Urge_P3M_num + Problems_P3M_num + 
+       Failed_P3M_num + Concern_Ever_num + Cut_Down_Ever_num, 
+     by = .(pid, Time, Substance)]
+
+whoa[, Risk_Category := case_when(Risk_Score %in% 0:3 & Substance != 'alc' ~ 'Lower Risk',
+                                    Risk_Score %in% 4:26 & Substance != 'alc' ~ 'Moderate Risk',
+                                    Risk_Score > 26 & Substance != 'alc' ~ 'High Risk',
+                                    Risk_Score %in% 0:10 & Substance == 'alc' ~ 'Lower Risk',
+                                    Risk_Score %in% 11:26 & Substance == 'alc' ~ 'Moderate Risk',
+                                    Risk_Score > 26 & Substance == 'alc' ~ 'High Risk'), by = .(pid, Substance)]
+
+whoa[, Risk_Category := ordered(Risk_Category, levels = c('Lower Risk','Moderate Risk','High Risk'))]
+
+whoa[, Not_Low_Risk := dplyr::case_when(Risk_Category == "Lower Risk" ~ "Lower Risk",
+                                          Risk_Category != "Lower Risk" ~ "Moderate/High Risk")]
+
+whoa[, Not_Low_Risk := factor(Not_Low_Risk, levels = c("Lower Risk","Moderate/High Risk"))]
+
+assist_wide <- dcast(whoa[, .(pid, Time, Substance, Risk_Category, Risk_Score)],
+                     pid + Time ~ Substance, value.var = c("Risk_Category","Risk_Score"))
+
+label(assist_wide$Risk_Category_tob) <- " Tobacco products (cigarettes, chewing tobacco, cigars, etc.)"
+label(assist_wide$Risk_Category_alc) <- "Alcoholic beverages (beer, wine, spirits, etc.)"
+label(assist_wide$Risk_Category_can) <- "Marijuana (cannabis, pot, grass, hash, etc.)"
+label(assist_wide$Risk_Category_coc) <- "Cocaine (coke, crack, etc.)"
+label(assist_wide$Risk_Category_pstm) <- "Prescription stimulants (Ritalin, Concerta, Dexedrine, Adderall, diet pills, etc.)"
+label(assist_wide$Risk_Category_mthp) <- "Methamphetamine (speed, crystal meth, ice, etc.)"
+label(assist_wide$Risk_Category_inh) <- "Inhalants (poppers, nitrous, glue, gas, paint thinner, etc.)"
+label(assist_wide$Risk_Category_sed) <- "Sedatives or Sleeping Pills (Valium, Ativan, Xanax, Klonopin, Librium, Rophynol, GHB, etc.)"
+label(assist_wide$Risk_Category_hal) <- "Hallucinogens (Ecstasy, LSD, acid, mushrooms, PCP, Special K, etc.)"
+label(assist_wide$Risk_Category_sopi) <- "Street opioids (heroin, opium, etc.)"
+label(assist_wide$Risk_Category_popi) <- "Prescription opioids (morphine, codeine, fentanyl, oxycodone [Oxycontin, Percocet], hydrocodone [Vicodin], methadone, buprenorphine [Suboxone], etc.)"
+label(assist_wide$Risk_Category_oth) <- "Other Drugs"
+
+label(assist_wide$Risk_Score_tob) <- " Tobacco products (cigarettes, chewing tobacco, cigars, etc.)"
+label(assist_wide$Risk_Score_alc) <- "Alcoholic beverages (beer, wine, spirits, etc.)"
+label(assist_wide$Risk_Score_can) <- "Marijuana (cannabis, pot, grass, hash, etc.)"
+label(assist_wide$Risk_Score_coc) <- "Cocaine (coke, crack, etc.)"
+label(assist_wide$Risk_Score_pstm) <- "Prescription stimulants (Ritalin, Concerta, Dexedrine, Adderall, diet pills, etc.)"
+label(assist_wide$Risk_Score_mthp) <- "Methamphetamine (speed, crystal meth, ice, etc.)"
+label(assist_wide$Risk_Score_inh) <- "Inhalants (poppers, nitrous, glue, gas, paint thinner, etc.)"
+label(assist_wide$Risk_Score_sed) <- "Sedatives or Sleeping Pills (Valium, Ativan, Xanax, Klonopin, Librium, Rophynol, GHB, etc.)"
+label(assist_wide$Risk_Score_hal) <- "Hallucinogens (Ecstasy, LSD, acid, mushrooms, PCP, Special K, etc.)"
+label(assist_wide$Risk_Score_sopi) <- "Street opioids (heroin, opium, etc.)"
+label(assist_wide$Risk_Score_popi) <- "Prescription opioids (morphine, codeine, fentanyl, oxycodone [Oxycontin, Percocet], hydrocodone [Vicodin], methadone, buprenorphine [Suboxone], etc.)"
+label(assist_wide$Risk_Score_oth) <- "Other Drugs"
+```
+
+## Risk Categories
+```{r}
+table1(~ . | Time, data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Time|Category"], overall = FALSE) |>
+  t1flex()
+
+```
+
+## Risk Scores
+```{r}
+table1(~ . | Time, data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Time|Score"], overall = FALSE) |>
+  t1flex()
+
+```
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for three extra summaries from WHO ASSIST"
+
+assist_wide <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE), 
+                 list(assist_wide, 
+                      whoa[, .(Mod_Hi_Risk = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid, Time)],
+                      whoa[Substance != "tob", .(Mod_Hi_Risk_NoTOB = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid, Time)],
+                      whoa[!(Substance %in% c("tob","can","alc")), .(Mod_Hi_Risk_NoTOBCANALC = any(Risk_Category %in% c("Moderate Risk","High Risk"))), by = .(pid, Time)]))
+
+label(assist_wide$Mod_Hi_Risk) <- "Any Moderate or High Risk Substance Use"
+label(assist_wide$Mod_Hi_Risk_NoTOB) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco"
+label(assist_wide$Mod_Hi_Risk_NoTOBCANALC) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco, Alcohol, and Cannabis"
+```
+
+## PrEP
+
+```{r}
+table1(~ bl_prep1 + bl_prep2,
+       data = as_factor(blint[pid %in% Not_Withdrawn,])) |>
+  t1flex()
+
+```
+
+## Substance Use and Mental Health Treatment
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for substance use and mental health treatment"
+
+SUMH <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_sumhtx\\d+$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_sumhtx\\d+$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_sumhtx\\d+$|pid"]))
+
+SUMH <- melt(SUMH, id.vars = "pid",
+             measure.vars = patterns("tx1$","tx2$","tx3$","tx4$","tx5$",
+                                     "tx6$","tx7$","tx8$","tx9$","tx10$",
+                                     "tx11$","tx12$","tx13$","tx14$","tx15$",
+                                     "tx16$","tx17$","tx18$","tx19$","tx20$",
+                                     "tx21$","tx22$","tx23$","tx24$","tx25$",
+                                     "tx26$","tx27$","tx28$","tx29$","tx30$"),
+             variable.name = "Time",
+             value.name = paste("sumhtx", 1:30, sep = ""))
+
+SUMH[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+SUMH <- merge(follow[,.(pid,Time)], SUMH)
+```
+
+### Lifetime (Baseline)
+
+```{r}
+table1(~ sumhtx1 + sumhtx2 + sumhtx3 + sumhtx4 + sumhtx5 +
+         sumhtx6 + sumhtx7 + sumhtx8 + sumhtx9 + sumhtx10 +
+         sumhtx11 + sumhtx12 + sumhtx13 + sumhtx14 + sumhtx15, 
+       data = as_factor(SUMH[Time == "BL",])) |>
+  t1flex()
+
+```
+
+### Past Six Months
+
+```{r}
+table1(~ sumhtx16 + sumhtx17 + sumhtx18 + sumhtx19 + sumhtx20 +
+         sumhtx21 + sumhtx22 + sumhtx23 + sumhtx24 + sumhtx25 +
+         sumhtx26 + sumhtx27 + sumhtx28 + sumhtx29 + sumhtx30 | Time, 
+       data = as_factor(SUMH),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+## PHQ
+
+[Kroenke, K., Strine, T. W., Spitzer, R. L., Williams, J. B., Berry, J. T., & Mokdad, A. H. (2009). The PHQ-8 as a measure of current depression in the general population. Journal of affective disorders, 114(1-3), 163-173.](https://www.sciencedirect.com/science/article/pii/S0165032708002826)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for PHQ"
+
+PHQ <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_phq\\d$|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_phq\\d$|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_phq\\d$|pid"]))
+
+PHQ <- melt(PHQ, id.vars = "pid",
+            measure.vars = patterns("phq1$","phq2$","phq3$","phq4$",
+                                    "phq5$","phq6$","phq7$","phq8$"),
+            variable.name = "Time",
+            value.name = c("phq1","phq2","phq3","phq4",
+                           "phq5","phq6","phq7","phq8"))
+
+PHQ[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+PHQ <- merge(follow[,.(pid,Time)], PHQ)
+
+phq_m <- melt(PHQ, id.vars = c("pid","Time"),
+              measure.vars = patterns("^phq"),
+              variable.name = "Item",
+              value.name = "Response")
+
+phq_m[, Response_n := ifelse(Response %in% 1:5, Response, as.integer(NA))]
+phq_m[, NMISS := sum(is.na(Response_n)), by = .(pid,Time)]
+
+PHQ <- merge(PHQ, 
+             phq_m[,.(PHQTOTAL = if (all(NMISS > 3)) as.double(NA) else mean(Response_n - 1, na.rm = TRUE) * 8), 
+                   by = .(pid,Time)],
+             by = c("pid","Time"))
+
+label(PHQ$PHQTOTAL) <- "PHQ Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(PHQ[,.SD, .SDcols = names(PHQ) %like% "phq|PHQ|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br> 
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(phq_m[Time == "BL",], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+## PTSD
+
+[Cameron, R. P., & Gusman, D. (2003). The primary care PTSD screen (PC-PTSD): development and operating characteristics. Primary care psychiatry, 9(1), 9-14.](https://depts.washington.edu/fammed/improvingopioidcare/wp-content/uploads/sites/12/2018/02/Prins-2003.pdf)
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for PTSD"
+
+PTSD <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_ptsd\\d$|ptsdscore|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_ptsd\\d$|ptsdscore|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_ptsd\\d|ptsdscore|pid"]))
+
+PTSD <- melt(PTSD, id.vars = "pid",
+            measure.vars = patterns("ptsd1$","ptsd2$","ptsd3$","ptsd4$",
+                                    "score"),
+            variable.name = "Time",
+            value.name = c("ptsd1","ptsd2","ptsd3","ptsd4",
+                           "ptsdscore"))
+
+PTSD[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+PTSD <- merge(follow[,.(pid,Time)], PTSD)
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(PTSD[,.SD, .SDcols = names(PTSD) %like% "ptsd|score|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+## Resilience
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for resilience"
+
+Resil <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.SD, .SDcols = names(blint) %like% "_resilience\\d|pid"], 
+            f1int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f1int) %like% "_resilience\\d|pid"],
+            f2int[pid %in% Not_Withdrawn,.SD, .SDcols = names(f2int) %like% "_resilience\\d|pid"]))
+
+Resil <- melt(Resil, id.vars = "pid",
+               measure.vars = patterns("resilience1$","resilience2$","resilience3$","resilience4$","resilience5$",
+                                       "resilience6$","resilience7$","resilience8$","resilience9$","resilience10$"),
+               variable.name = "Time",
+               value.name = paste("resilience", 1:10, sep = ""))
+
+Resil[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+Resil <- merge(follow[,.(pid,Time)], Resil)
+
+Resil_m <- melt(Resil, id.vars = c("pid","Time"),
+                 variable.name = "Item", value.name = "Response")
+
+Resil_m[, Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+
+Resil <- merge(Resil,
+      Resil_m[, .(Resilience = mean(Response_n, na.rm = TRUE)*10), by = .(pid,Time)],
+      by = c("pid","Time"))
+
+label(Resil$Resilience) <- "Resilience Total Score"
+```
+
+```{r}
+table1(~ . | Time, data = as_factor(Resil[, .SD, .SDcols = names(Resil) %like% "resilience\\d$|Resil|Time"]),
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+<br>
+
+Coefficient Alpha (Baseline)
+
+```{r}
+myalpha <- dcast(Resil_m[Time == "BL",.(pid,Item,Response_n)], pid ~ Item, value.var = "Response_n") %>%
+  .[, pid := NULL] |>
+  psych::alpha()
+
+myalpha[1:4] |> pander()
+```
+
+# SU Screening
+
+```{r}
+setDT(drug_test_form)
+
+drug_test_form[, Time := car::recode(redcap_event, "'baseline_interview'='BL';
+                                                    'follow_up_1_interv'='9M';
+                                                    'follow_up_2_interv'='18M'", as.factor = TRUE,
+                                     levels = c("BL","9M","18M"))]
+
+
+table1(~ . | Time , data = as_factor(drug_test_form[pid %in% Not_Withdrawn, 
+                                  .SD, .SDcols = names(drug_test_form) %like% "^drug_sample1_test|drug_accept_test|Time"]),
+       render = my.render,
+       overall = FALSE) |>
+  t1flex()
+
+```
+
+# EMA
+
+## Timing of EMA Bursts 1-8
+
+-   The earliest **first** burst of EMA began on `r format(min(ema_burst_1_form$ema_start_w1, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **second** burst of EMA began on `r format(min(ema_burst_2_form$ema_start_w2, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **third** burst of EMA began on `r format(min(ema_burst_3_form$ema_start_w3, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **fourth** burst of EMA began on `r format(min(ema_burst_4_form$ema_start_w4, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **fifth** burst of EMA began on `r format(min(ema_burst_5_form$ema_start_w5, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **sixth** burst of EMA began on `r format(min(ema_burst_6_form$ema_start_w6, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **seventh** burst of EMA began on `r format(min(ema_burst_7_form$ema_start_w7, na.rm=TRUE), "%A, %B %d, %Y")`
+-   The earliest **eighth** burst of EMA began on `r format(min(ema_burst_8_form$ema_start_w8, na.rm=TRUE), "%A, %B %d, %Y")`
+
+## Item Summaries
+
+### Daily
+
+```{r}
+table1(~ v1_ema_q1 + v1_ema_q2___1 + v1_ema_q2___2 + v1_ema_q2___3 +
+         v1_ema_q2___4 + v1_ema_q2___5 + v1_ema_q2___6 + v1_ema_q2___7 +
+         v1_ema_q2___8 + v1_ema_q2___9 + v1_ema_q2___10 + v1_ema_q2___11 +
+         v1_ema_q2___996 + v1_ema_q3 + v1_ema_q4 + v1_ema_q5 + v1_ema_q6, 
+       data = as_factor(ema_daily_assessment)) |>
+  t1flex()
+
+```
+
+### End of the Day
+
+```{r}
+table1(~ v1_ema4_q1 + v1_ema4_q3 + v1_ema4_q4 + v1_ema4_q5 + v1_ema4_q6 + v1_ema4_q7 +
+                           v1_ema4_q2___1 + v1_ema4_q2___2 + v1_ema4_q2___3 + v1_ema4_q2___4 +
+                             v1_ema4_q2___5 + v1_ema4_q2___6 + v1_ema4_q2___7 + v1_ema4_q2___8 +
+                             v1_ema4_q2___9 + v1_ema4_q2___10 + v1_ema4_q2___11 + v1_ema4_q2___996, 
+       data = as_factor(ema_end_of_day_assessment)) |>
+  t1flex()
+
+```
+
+<br>
+
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for integrating items related to daily medication adherence"
+
+setDT(ema_end_of_day_assessment)
+
+ema_end_of_day_assessment[is.na(v1_ema4_q9_v2) & !is.na(v1_ema4_q7) & v1_ema4_q7 == 0, v1_ema4_q9_v2 := 0]
+ema_end_of_day_assessment[is.na(v1_ema4_q9) & !is.na(v1_ema4_q7) & v1_ema4_q7 == 0, v1_ema4_q9 := 0]
+ema_end_of_day_assessment[is.na(v1_ema4_q9_v2) & v1_ema4_q9 == 0, v1_ema4_q9_v2 := 0]
+
+ema_end_of_day_assessment[is.na(v1_ema4_q9_v2) & v1_ema4_q9 == 10, v1_ema4_q9_v2 := 3]
+ema_end_of_day_assessment[is.na(v1_ema4_q9) & v1_ema4_q9_v2 == 3, v1_ema4_q9 := 10]
+ema_end_of_day_assessment[is.na(v1_ema4_q9_v2) & v1_ema4_q9 %in% 2:9, v1_ema4_q9_v2 := 1]
+
+ema_end_of_day_assessment$v1_ema4_q9_v2 <- labelled(
+  ema_end_of_day_assessment$v1_ema4_q9_v2,
+  c("None of my doses" = 0, "Some of my dosees" = 1, "Most of my doses" = 2, "All of my HIV medication doses" = 3)
+)
+
+var_label(ema_end_of_day_assessment$v1_ema4_q9_v2) <- "How much of your HIV medication did you take today?"
+```
+
+```{r}
+table1(~ v1_ema4_q9 + v1_ema4_q9_v2 + v1_ema4_q7, 
+       data = as_factor(ema_end_of_day_assessment[!is.na(v1_ema4_q7) | !is.na(v1_ema4_q9) | !is.na(v1_ema4_q9_v2)])) |>
+  t1flex()
+
+```
+
+<br>
+
+#### What are the main reasons you did not take HIV medication today?
+
+```{r}
+table1(~ ., data = as_factor(ema_end_of_day_assessment[v1_ema4_q7 == 0 | v1_ema4_q9_v2 == 0, 
+                                                       .SD, .SDcols = names(ema_end_of_day_assessment) %like% "^v1_ema4_q8___"])) |>
+  t1flex()
+
+```
+
+<br>
+
+# Suppressed Viral Load Over Time
+
+```{r}
+setDT(blood_draw_form)
+
+long_VL <- blood_draw_form[pid %in% Not_Withdrawn,.(pid,redcap_event,blood_vl_q2,blood_vl_q3,blood_vl_q4)]
+
+wide_VL <- dcast(long_VL[!is.na(blood_vl_q2),.(pid,redcap_event,blood_vl_q2)],
+      pid ~ redcap_event, value.var = "blood_vl_q2")
+
+setnames(wide_VL, old = c("baseline_interview", 
+                          "follow_up_1_interv", 
+                          "follow_up_2_interv"),
+                  new = c('BL_Undetectable',
+                          'FU1_Undetectable',
+                          'FU2_Undetectable'))
+```
+
+## Viral Load $\lt$ 200 copies/mL at Baseline (n=219)
+
+```{r}
+gtsummary::tbl_cross(as_factor(wide_VL[pid %in% Not_Withdrawn & 
+                                       !is.na(BL_Undetectable) &
+                                       BL_Undetectable == 1,]), 
+                               row = FU1_Undetectable, 
+                               col = FU2_Undetectable,
+                               percent = "cell",
+                               label = list(FU1_Undetectable ~ "Suppressed at 9M", 
+                                            FU2_Undetectable ~ "Suppressed at 18M")) |>
+gtsummary::as_flex_table()
+```
+
+## Viral Load $\ge$ 200 copies/mL at Baseline (n=52)
+
+```{r}
+gtsummary::tbl_cross(as_factor(wide_VL[pid %in% Not_Withdrawn & 
+                                       !is.na(BL_Undetectable) &
+                                       BL_Undetectable == 0,]), 
+                               row = FU1_Undetectable, 
+                               col = FU2_Undetectable,
+                               percent = "cell",
+                               label = list(FU1_Undetectable ~ "Suppressed at 9M", 
+                                            FU2_Undetectable ~ "Suppressed at 18M")) |>
+gtsummary::as_flex_table()
+```
+
+```{r}
+change_VL_status <- wide_VL[pid %in% Not_Withdrawn &
+        (!is.na(FU1_Undetectable) & FU1_Undetectable != BL_Undetectable) |
+        (!is.na(FU2_Undetectable) & FU2_Undetectable != BL_Undetectable) |
+        (!is.na(FU1_Undetectable) & !is.na(FU2_Undetectable) & FU1_Undetectable != FU2_Undetectable),]
+```
+
+```{r}
+longit_cohort <- wide_VL[pid %in% Not_Withdrawn] |> 
+  cohort_start("Enrolled<br>") |>
+    cohort_define(
+    bl_n = .full |> filter(BL_Undetectable == 0),
+    bl_y = .full |> filter(BL_Undetectable == 1),
+    bl_n_f1_n = bl_n |> filter(FU1_Undetectable == 0),
+    bl_n_f1_y = bl_n |> filter(FU1_Undetectable == 1),
+    bl_y_f1_n = bl_y |> filter(FU1_Undetectable == 0),
+    bl_y_f1_y = bl_y |> filter(FU1_Undetectable == 1),
+    bl_n_f1_n_f2_n = bl_n_f1_n |> filter(FU2_Undetectable == 0),
+    bl_n_f1_y_f2_n = bl_n_f1_y |> filter(FU2_Undetectable == 0),
+    bl_y_f1_n_f2_n = bl_y_f1_n |> filter(FU2_Undetectable == 0),
+    bl_y_f1_y_f2_n = bl_y_f1_y |> filter(FU2_Undetectable == 0),
+    bl_n_f1_n_f2_y = bl_n_f1_n |> filter(FU2_Undetectable == 1),
+    bl_n_f1_y_f2_y = bl_n_f1_y |> filter(FU2_Undetectable == 1),
+    bl_y_f1_n_f2_y = bl_y_f1_n |> filter(FU2_Undetectable == 1),
+    bl_y_f1_y_f2_y = bl_y_f1_y |> filter(FU2_Undetectable == 1)
+    ) |>
+  cohort_label(
+    bl_n = "Unsuppressed<br>at BL<br>",
+    bl_y = "Suppressed<br>at BL<br>",
+    bl_n_f1_n = "Unsuppressed<br>at 9M<br>",
+    bl_n_f1_y = "Suppressed<br>at 9M<br>",
+    bl_y_f1_n = "Unsuppressed<br>at 9M<br>",
+    bl_y_f1_y = "Suppressed<br>at 9M<br>",
+    bl_n_f1_n_f2_n = "Unsuppressed<br>at 18M<br>",
+    bl_n_f1_y_f2_n = "Unsuppressed<br>at 18M<br>",
+    bl_y_f1_n_f2_n = "Unsuppressed<br>at 18M<br>",
+    bl_y_f1_y_f2_n = "Unsuppressed<br>at 18M<br>",
+    bl_n_f1_n_f2_y = "Suppressed<br>at 18M<br>",
+    bl_n_f1_y_f2_y = "Suppressed<br>at 18M<br>",
+    bl_y_f1_n_f2_y = "Suppressed<br>at 18M<br>",
+    bl_y_f1_y_f2_y = "Suppressed<br>at 18M<br>")
+```
+
+```{r}
+longit_flow <- longit_cohort |>
+  consort_box_add("NBL", 21.42857, 20, cohort_count_adorn(longit_cohort, bl_n)) |>
+  consort_box_add("YBL", 78.57143, 20, cohort_count_adorn(longit_cohort, bl_y)) |>
+  consort_box_add("NBLNF1",  7.143, 10, cohort_count_adorn(longit_cohort, bl_n_f1_n)) |>  
+  consort_box_add("NBLYF1",  35.714, 10, cohort_count_adorn(longit_cohort, bl_n_f1_y)) |>  
+  consort_box_add("YBLNF1",  64.286, 10, cohort_count_adorn(longit_cohort, bl_y_f1_n)) |>
+  consort_box_add("YBLYF1",  92.857, 10, cohort_count_adorn(longit_cohort, bl_y_f1_y)) |>    
+  consort_box_add("NBLNF1NF2",      0, 0, cohort_count_adorn(longit_cohort, bl_n_f1_n_f2_n)) |>
+  consort_box_add("NBLNF1YF2",   14.3, 0, cohort_count_adorn(longit_cohort, bl_n_f1_n_f2_y)) |>    
+  consort_box_add("NBLYF1NF2",   28.6, 0, cohort_count_adorn(longit_cohort, bl_n_f1_y_f2_n)) |>    
+  consort_box_add("NBLYF1YF2",   42.9, 0, cohort_count_adorn(longit_cohort, bl_n_f1_y_f2_y)) |>    
+  consort_box_add("YBLNF1NF2",   57.1, 0, cohort_count_adorn(longit_cohort, bl_y_f1_n_f2_n)) |>    
+  consort_box_add("YBLNF1YF2",   71.4, 0, cohort_count_adorn(longit_cohort, bl_y_f1_n_f2_y)) |>    
+  consort_box_add("YBLYF1NF2",   85.7, 0, cohort_count_adorn(longit_cohort, bl_y_f1_y_f2_n)) |>
+  consort_box_add("YBLYF1YF2",    100, 0, cohort_count_adorn(longit_cohort, bl_y_f1_y_f2_y)) |>
+  consort_arrow_add(start = "NBL", end = "NBLNF1", end_side = "top") |>
+  consort_arrow_add(start = "NBL", end = "NBLYF1", end_side = "top") |>
+  consort_arrow_add(start = "YBL", end = "YBLNF1", end_side = "top") |>
+  consort_arrow_add(start = "YBL", end = "YBLYF1", end_side = "top") |>
+  consort_arrow_add(start = "NBLNF1", end = "NBLNF1NF2", end_side = "top") |>
+  consort_arrow_add(start = "NBLNF1", end = "NBLNF1YF2", end_side = "top") |>
+  consort_arrow_add(start = "NBLYF1", end = "NBLYF1NF2", end_side = "top") |>
+  consort_arrow_add(start = "NBLYF1", end = "NBLYF1YF2", end_side = "top") |>
+  consort_arrow_add(start = "YBLNF1", end = "YBLNF1NF2", end_side = "top") |>
+  consort_arrow_add(start = "YBLNF1", end = "YBLNF1YF2", end_side = "top") |>
+  consort_arrow_add(start = "YBLYF1", end = "YBLYF1NF2", end_side = "top") |>
+  consort_arrow_add(start = "YBLYF1", end = "YBLYF1YF2", end_side = "top")
+
+```
+
+```{r, include = TRUE, fig.width = 11, fig.height = 3, dev='svg'}
+longit_flow |>
+  ggplot() + 
+  geom_consort() +
+  theme_consort(margin_h = 4, margin_v = 4)
+```
+
+```{r, eval=FALSE}
+consort_plot(wide_VL[pid %in% Not_Withdrawn],
+             orders = c(pid      = 'Enrolled',
+                        BL_Undetectable = 'Undetectable BL',
+                        FU1_Undetectable = 'Undetectable 9M',
+                        FU2_Undetectable = 'Undetectable 18M'),
+             allocation = 'BL_Undetectable',
+             side_box = c('FU1_Undetectable'))
+```
+
+```{r}
+library(gtsummary)
+
+wide_VL[, BL_Undetectable := dplyr::case_when(BL_Undetectable == 1 ~ "Suppressed at BL (n=222)",
+                                              BL_Undetectable == 0 ~ "Not Suppressed at BL (n=52)")]
+
+wide_VL[, FU1_Undetectable := dplyr::case_when(FU1_Undetectable == 1 ~ "Suppressed at 9M",
+                                               FU1_Undetectable == 0 ~ "Not Suppressed at 9M")]
+
+wide_VL[, FU2_Undetectable := dplyr::case_when(FU2_Undetectable == 1 ~ "Suppressed at 18M",
+                                               FU2_Undetectable == 0 ~ "Not Suppressed at 18M")]
+```
+
+```{r, results='asis', eval=FALSE}
+mytab4 <- wide_VL[pid %in% Not_Withdrawn,] |> 
+  tbl_strata(
+    strata = BL_Undetectable,
+    .tbl_fun =
+      ~ .x |>
+      tbl_cross(FU1_Undetectable, FU2_Undetectable, margin = NULL,
+                percent = "cell",
+                label = list(FU1_Undetectable ~ "9 Month Follow-Up",
+                             FU2_Undetectable ~ "18 Month Follow-Up")) 
+  )
+
+print(mytab4)
+```
+
+-   n=`r nrow(change_VL_status)` participants had a change in HIV viral load suppression over time
+    -   n=`r nrow(change_VL_status[BL_Undetectable == 1,])` participants who were enrolled with $\lt$ 200 copies/mL became unsuppressed
+    -   n=`r nrow(change_VL_status[BL_Undetectable == 0,])` participants who were enrolled with $\ge$ 200 copies/mL became suppressed
+
+```{r, echo=FALSE, include=FALSE}
+pscrn_meta <- REDCapR::redcap_metadata_read(redcap_uri = uri, token=tkns[3,2])
+
+pscrn_meta[["data"]] |> subset(, select = "form_name") |> unique() |> as.vector()
+
+N4_pscrn_stbl <- read_redcap(redcap_uri=uri, forms = c("public_contact_form","follow_up_tracker" ), 
+                       raw_or_label = "raw", token=tkns[3,2],
+                       allow_mixed_structure = TRUE)
+
+N4_pscrn_stbl |>
+  make_labelled() |>
+bind_tibbles(tbls = c("public_contact_form",
+                      "follow_up_tracker"))
+```
+
+# Prescreening Form (n=`r nrow(follow_up_tracker)`)
+
+-   Prescreener completed (n=`r sum(follow_up_tracker$fu_form3___1 == 1)`)\
+-   Refused prescreener (n=`r sum(follow_up_tracker$fu_form3___2 == 1)`)\
+-   Recruiter only (n=`r sum(follow_up_tracker$fu_form3___3 == 1)`)\
+-   Needs additional contact info (n=`r sum(follow_up_tracker$fu_form3___4 == 1)`)\
+-   Do not contact (n=`r sum(follow_up_tracker$fu_form3___5 == 1)`)
+
+```{r}
+setDT(blood_draw_form)
+
+blood_draw_form[, Time := car::recode(redcap_event, "'baseline_interview'='BL';
+                                                    'follow_up_1_interv'='9M';
+                                                    'follow_up_2_interv'='18M'", as.factor = TRUE,
+                                     levels = c("BL","9M","18M"))]
+```
+
+```{r}
+label(assist_wide$Risk_Category_tob) <- "Tobacco products (cigarettes, chewing tobacco, cigars, etc.)"
+label(assist_wide$Risk_Category_alc) <- "Alcoholic beverages (beer, wine, spirits, etc.)"
+label(assist_wide$Risk_Category_can) <- "Marijuana (cannabis, pot, grass, hash, etc.)"
+label(assist_wide$Risk_Category_coc) <- "Cocaine (coke, crack, etc.)"
+label(assist_wide$Risk_Category_pstm) <- "Prescription stimulants (Ritalin, Concerta, Dexedrine, Adderall, diet pills, etc.)"
+label(assist_wide$Risk_Category_mthp) <- "Methamphetamine (speed, crystal meth, ice, etc.)"
+label(assist_wide$Risk_Category_inh) <- "Inhalants (poppers, nitrous, glue, gas, paint thinner, etc.)"
+label(assist_wide$Risk_Category_sed) <- "Sedatives or Sleeping Pills (Valium, Ativan, Xanax, Klonopin, Librium, Rophynol, GHB, etc.)"
+label(assist_wide$Risk_Category_hal) <- "Hallucinogens (Ecstasy, LSD, acid, mushrooms, PCP, Special K, etc.)"
+label(assist_wide$Risk_Category_sopi) <- "Street opioids (heroin, opium, etc.)"
+label(assist_wide$Risk_Category_popi) <- "Prescription opioids (morphine, codeine, fentanyl, oxycodone [Oxycontin, Percocet], hydrocodone [Vicodin], methadone, buprenorphine [Suboxone], etc.)"
+label(assist_wide$Risk_Category_oth) <- "Other Drugs"
+
+label(assist_wide$Risk_Score_tob) <- "Tobacco products (cigarettes, chewing tobacco, cigars, etc.)"
+label(assist_wide$Risk_Score_alc) <- "Alcoholic beverages (beer, wine, spirits, etc.)"
+label(assist_wide$Risk_Score_can) <- "Marijuana (cannabis, pot, grass, hash, etc.)"
+label(assist_wide$Risk_Score_coc) <- "Cocaine (coke, crack, etc.)"
+label(assist_wide$Risk_Score_pstm) <- "Prescription stimulants (Ritalin, Concerta, Dexedrine, Adderall, diet pills, etc.)"
+label(assist_wide$Risk_Score_mthp) <- "Methamphetamine (speed, crystal meth, ice, etc.)"
+label(assist_wide$Risk_Score_inh) <- "Inhalants (poppers, nitrous, glue, gas, paint thinner, etc.)"
+label(assist_wide$Risk_Score_sed) <- "Sedatives or Sleeping Pills (Valium, Ativan, Xanax, Klonopin, Librium, Rophynol, GHB, etc.)"
+label(assist_wide$Risk_Score_hal) <- "Hallucinogens (Ecstasy, LSD, acid, mushrooms, PCP, Special K, etc.)"
+label(assist_wide$Risk_Score_sopi) <- "Street opioids (heroin, opium, etc.)"
+label(assist_wide$Risk_Score_popi) <- "Prescription opioids (morphine, codeine, fentanyl, oxycodone [Oxycontin, Percocet], hydrocodone [Vicodin], methadone, buprenorphine [Suboxone], etc.)"
+label(assist_wide$Risk_Score_oth) <- "Other Drugs"
+```
+
+```{r}
+save(list = c(setdiff(ls(), c("tkns","token","plist","figtop","figtop_VL","i",
+                "myalpha","mytab1","mytab2","mytab3","mytab4","mytab9",
+                "uri","rcon","baseline_consent_form","Cohort_DT","fu1_referral_form_staff",
+                "lab_upload_form","locator_form","N4_bl_stbl","N4_blood_stbl","N4_drug_stbl",
+                "N4_ema_stbl","N4_fu1_stbl","N4_fu2_stbl","N4_loc_stbl","N4_other_stbl",
+                "N4_screen_stbl","zoom_tracker_form","referral_form","practice_ema"))),
+     file = "c:/chuck/NYU/Gwadz/Adolescent Longitudinal/N4R/n4c-Tidy.Rdata")
+```
+
+
+
