@@ -13,6 +13,6 @@ knitr::include_graphics("n4logo.png")
 
 <br>
 
-<center>[N4 Connect](https://clelandcm.github.io/N4C/Report-Tidier.html)</center>
+<center>[N4 Connect Longitudinal](https://clelandcm.github.io/N4C/Report-Tidier.html)</center>
 
  
