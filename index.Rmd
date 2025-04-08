@@ -11,4 +11,8 @@ knitr::include_graphics("n4logo.png")
 
 <center>[N4 Connect](https://clelandcm.github.io/N4C/Report.html)</center>
 
+<br>
+
+<center>[N4 Connect](https://clelandcm.github.io/N4C/Report-Tidier.html)</center>
+
  
