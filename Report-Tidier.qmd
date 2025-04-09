@@ -830,10 +830,98 @@ gtsummary::as_flex_table()
 ```{r}
 label(blint$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
 
-table1(~ bl_immig1 + bl_immig2 + bl_live1 + bl_education1 + bl_education2 + bl_employ4 + bl_insurance, 
+table1(~ bl_immig1 + bl_immig2, 
        data = as_factor(blint[pid %in% Not_Withdrawn])) |>
   t1flex()
 
+```
+
+<br>
+
+```{r}
+Dem_long <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.(pid,bl_income2,bl_live1,bl_live2___1,bl_live2___2,bl_live2___3,bl_live2___4,bl_live2___5,
+                                           bl_live2___6,bl_live2___7,bl_live2___996,bl_live2___998,bl_live3,bl_cjhistory1,bl_cjhistory2,
+                                           bl_insurance,bl_covid1,bl_covid4,bl_awareness5,bl_awareness6,bl_rstatus___1,
+                                           bl_rstatus___2,bl_rstatus___3,bl_rstatus___4,bl_rstatus___5,bl_rstatus___6,
+                                           bl_rstatus___7,bl_rstatus___8,bl_rstatus___9,bl_rstatus___996,bl_rstatus___997,
+                                           bl_rstatus___998,bl_sex1,bl_sex2,bl_sex3___1,bl_sex3___2,bl_sex3___3,
+                                           bl_sex3___4,bl_sex3___996,bl_sex3___998,bl_education1,bl_education2,
+                                           bl_employ1,bl_employ2,bl_employ4,bl_employ5,bl_income3___1,bl_income3___2,
+                                           bl_income3___3,bl_income3___4,bl_income3___996,bl_income3___998,bl_street1___1,
+                                           bl_street1___2,bl_street1___3,bl_street1___4,bl_street1___5,bl_street1___6,
+                                           bl_street1___7,bl_street1___996,bl_street1___998,bl_street1___999)],
+            f1int[pid %in% Not_Withdrawn,.(pid,fu1_income2,fu1_live1,fu1_live2___1,fu1_live2___2,fu1_live2___3,fu1_live2___4,fu1_live2___5,
+                                           fu1_live2___6,fu1_live2___7,fu1_live2___996,fu1_live2___998,fu1_live3,fu1_cjhistory1,fu1_cjhistory2,
+                                           fu1_insurance,fu1_covid1,fu1_covid4,fu1_awareness5,fu1_awareness6,fu1_rstatus___1,
+                                           fu1_rstatus___2,fu1_rstatus___3,fu1_rstatus___4,fu1_rstatus___5,fu1_rstatus___6,
+                                           fu1_rstatus___7,fu1_rstatus___8,fu1_rstatus___9,fu1_rstatus___996,fu1_rstatus___997,
+                                           fu1_rstatus___998,fu1_sex1,fu1_sex2,fu1_sex3___1,fu1_sex3___2,fu1_sex3___3,
+                                           fu1_sex3___4,fu1_sex3___996,fu1_sex3___998,fu1_education1,fu1_education2,
+                                           fu1_employ1,fu1_employ2,fu1_employ4,fu1_employ5,fu1_income3___1,fu1_income3___2,
+                                           fu1_income3___3,fu1_income3___4,fu1_income3___996,fu1_income3___998,fu1_street1___1,
+                                           fu1_street1___2,fu1_street1___3,fu1_street1___4,fu1_street1___5,fu1_street1___6,
+                                           fu1_street1___7,fu1_street1___996,fu1_street1___998,fu1_street1___999)],
+            f2int[pid %in% Not_Withdrawn,.(pid,fu2_income2,fu2_live1,fu2_live2___1,fu2_live2___2,fu2_live2___3,fu2_live2___4,fu2_live2___5,
+                                           fu2_live2___6,fu2_live2___7,fu2_live2___996,fu2_live2___998,fu2_live3,fu2_cjhistory1,fu2_cjhistory2,
+                                           fu2_insurance,fu2_covid1,fu2_covid4,fu2_awareness5,fu2_awareness6,fu2_rstatus___1,
+                                           fu2_rstatus___2,fu2_rstatus___3,fu2_rstatus___4,fu2_rstatus___5,fu2_rstatus___6,
+                                           fu2_rstatus___7,fu2_rstatus___8,fu2_rstatus___9,fu2_rstatus___996,fu2_rstatus___997,
+                                           fu2_rstatus___998,fu2_sex1,fu2_sex2,fu2_sex3___1,fu2_sex3___2,fu2_sex3___3,
+                                           fu2_sex3___4,fu2_sex3___996,fu2_sex3___998,fu2_education1,fu2_education2,
+                                           fu2_employ1,fu2_employ2,fu2_employ4,fu2_employ5,fu2_income3___1,fu2_income3___2,
+                                           fu2_income3___3,fu2_income3___4,fu2_income3___996,fu2_income3___998,fu2_street1___1,
+                                           fu2_street1___2,fu2_street1___3,fu2_street1___4,fu2_street1___5,fu2_street1___6,
+                                           fu2_street1___7,fu2_street1___996,fu2_street1___998,fu2_street1___999)]))
+
+Dem_long_m <- melt(Dem_long, id.vars = "pid",
+                   measure.vars = patterns("income2$","live1$","live2___1$","live2___2$","live2___3$","live2___4$","live2___5$",
+                                           "live2___6$","live2___7$","live2___996$","live2___998$","live3$","cjhistory1$","cjhistory2$",
+                                           "insurance$","covid1$","covid4$","awareness5$","awareness6$","rstatus___1$",
+                                           "rstatus___2$","rstatus___3$","rstatus___4$","rstatus___5$","rstatus___6$",
+                                           "rstatus___7$","rstatus___8$","rstatus___9$","rstatus___996$","rstatus___997$",
+                                           "rstatus___998$","sex1$","sex2$","sex3___1$","sex3___2$","sex3___3$",
+                                           "sex3___4$","sex3___996$","sex3___998$","education1$","education2$",
+                                           "employ1$","employ2$","employ4$","employ5$","income3___1$","income3___2$",
+                                           "income3___3$","income3___4$","income3___996$","income3___998$","street1___1$",
+                                           "street1___2$","street1___3$","street1___4$","street1___5$","street1___6$",
+                                           "street1___7$","street1___996$","street1___998$","street1___999$"),
+                   variable.name = "Time", value.name = c("income2","live1","live2___1","live2___2","live2___3","live2___4","live2___5",
+                                           "live2___6","live2___7","live2___996","live2___998","live3","cjhistory1","cjhistory2",
+                                           "insurance","covid1","covid4","awareness5","awareness6","rstatus___1",
+                                           "rstatus___2","rstatus___3","rstatus___4","rstatus___5","rstatus___6",
+                                           "rstatus___7","rstatus___8","rstatus___9","rstatus___996","rstatus___997",
+                                           "rstatus___998","sex1","sex2","sex3___1","sex3___2","sex3___3",
+                                           "sex3___4","sex3___996","sex3___998","education1","education2",
+                                           "employ1","employ2","employ4","employ5","income3___1","income3___2",
+                                           "income3___3","income3___4","income3___996","income3___998","street1___1",
+                                           "street1___2","street1___3","street1___4","street1___5","street1___6",
+                                           "street1___7","street1___996","street1___998","street1___999"))
+
+Dem_long_m[, Time := car::recode(Time, "1='BL';2='9M';3='18M'", 
+                                 as.factor = TRUE, levels = c('BL','9M','18M'))]
+
+Dem_long_m <- merge(Dem_long_m, follow[,.(pid,Time)], all = FALSE)
+
+Dem_long_m[, sex2 := as.numeric(sex2)]
+
+label(Dem_long_m$sex2) <- "How old were you when you had sexual intercourse for the first time with somebody else?"
+```
+
+```{r}
+table1(~ income2 + live1 + live2___1 + live2___2 + live2___3 + live2___4 + live2___5 + 
+         live2___6 + live2___7 + live2___996 + live2___998 + live3 + cjhistory1 + cjhistory2 + 
+         insurance + covid1 + covid4 + awareness5 + awareness6 + rstatus___1 + 
+         rstatus___2 + rstatus___3 + rstatus___4 + rstatus___5 + rstatus___6 + 
+         rstatus___7 + rstatus___8 + rstatus___9 + rstatus___996 + rstatus___997 + 
+         rstatus___998 + sex1 + sex2 + sex3___1 + sex3___2 + sex3___3 + 
+         sex3___4 + sex3___996 + sex3___998 + education1 + education2 + 
+         employ1 + employ2 + employ4 + employ5 + income3___1 + income3___2 + 
+         income3___3 + income3___4 + income3___996 + income3___998 + street1___1 + 
+         street1___2 + street1___3 + street1___4 + street1___5 + street1___6 + 
+         street1___7 + street1___996 + street1___998 + street1___999 | Time, 
+       data = as_factor(Dem_long_m), overall = FALSE) |>
+  t1flex()
 ```
 
 ## Multigroup Ethnic Identity
