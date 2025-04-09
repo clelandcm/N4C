@@ -916,11 +916,11 @@ table1(~ income2 + live1 + live2___1 + live2___2 + live2___3 + live2___4 + live2
          rstatus___7 + rstatus___8 + rstatus___9 + rstatus___996 + rstatus___997 + 
          rstatus___998 + sex1 + sex2 + sex3___1 + sex3___2 + sex3___3 + 
          sex3___4 + sex3___996 + sex3___998 + education1 + education2 + 
-         employ1 + employ2 + employ4 + employ5 + income3___1 + income3___2 + 
+         employ1 + employ2 + employ4 + income3___1 + income3___2 + 
          income3___3 + income3___4 + income3___996 + income3___998 + street1___1 + 
          street1___2 + street1___3 + street1___4 + street1___5 + street1___6 + 
          street1___7 + street1___996 + street1___998 + street1___999 | Time, 
-       data = as_factor(Dem_long_m), overall = FALSE) |>
+       data = as_factor(Dem_long_m), overall = FALSE, render = my.render) |>
   t1flex()
 ```
 
