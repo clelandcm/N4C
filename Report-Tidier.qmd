@@ -830,7 +830,7 @@ gtsummary::as_flex_table()
 ```{r}
 label(blint$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
 
-table1(~ bl_immig1 + bl_immig2, 
+table1(~ bl_immig1 + bl_immig2 + bl_cjhistory2, 
        data = as_factor(blint[pid %in% Not_Withdrawn])) |>
   t1flex()
 
@@ -910,7 +910,7 @@ label(Dem_long_m$sex2) <- "How old were you when you had sexual intercourse for 
 
 ```{r}
 table1(~ income2 + live1 + live2___1 + live2___2 + live2___3 + live2___4 + live2___5 + 
-         live2___6 + live2___7 + live2___996 + live2___998 + live3 + cjhistory1 + cjhistory2 + 
+         live2___6 + live2___7 + live2___996 + live2___998 + live3 + 
          insurance + covid1 + covid4 + awareness5 + awareness6 + rstatus___1 + 
          rstatus___2 + rstatus___3 + rstatus___4 + rstatus___5 + rstatus___6 + 
          rstatus___7 + rstatus___8 + rstatus___9 + rstatus___996 + rstatus___997 + 
@@ -923,6 +923,29 @@ table1(~ income2 + live1 + live2___1 + live2___2 + live2___3 + live2___4 + live2
        data = as_factor(Dem_long_m), overall = FALSE, render = my.render) |>
   t1flex()
 ```
+
+<br>
+
+```{r}
+Dem_CJI <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), all = TRUE),
+       list(blint[pid %in% Not_Withdrawn,.(pid,bl_cjhistory1,bl_cjhistory2)],
+            f1int[pid %in% Not_Withdrawn,.(pid,fu1_cjhistory1,fu1_cjhistory2)],
+            f2int[pid %in% Not_Withdrawn,.(pid,fu2_cjhistory1,fu2_cjhistory2)]))
+
+label(Dem_CJI$fu1_cjhistory1) <- "How many times in the past 9 months have you been stopped or harassed by the police? [9M Follow-Up]"
+label(Dem_CJI$fu2_cjhistory1) <- "How many times in the past 9 months have you been stopped or harassed by the police? [18M Follow-Up]"
+label(Dem_CJI$fu1_cjhistory2) <- "How many times in the past 9 months have you spent one or more nights in a jail, prison, or detention facility? [9M Follow-Up]"
+label(Dem_CJI$fu2_cjhistory2) <- "How many times in the past 9 months have you spent one or more nights in a jail, prison, or detention facility? [18M Follow-Up]"
+```
+
+```{r}
+table1(~ bl_cjhistory1 + fu1_cjhistory1 + fu2_cjhistory1 +
+         bl_cjhistory2 + fu1_cjhistory2 + fu2_cjhistory2, data = as_factor(Dem_CJI),
+       render = my.render) |>
+  t1flex()
+```
+
+<br>
 
 ## Multigroup Ethnic Identity
 
