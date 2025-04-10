@@ -830,7 +830,7 @@ gtsummary::as_flex_table()
 ```{r}
 label(blint$bl_insurance) <- "Do you currently have health insurance or health care coverage?"
 
-table1(~ bl_immig1 + bl_immig2 + bl_cjhistory2, 
+table1(~ bl_immig1 + bl_immig2, 
        data = as_factor(blint[pid %in% Not_Withdrawn])) |>
   t1flex()
 
