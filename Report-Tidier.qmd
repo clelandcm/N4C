@@ -1953,7 +1953,7 @@ table1(~ sti2a + sti2b + sti2c + sti2d +
 
 ```
 
-# WHO ASSIST
+## WHO ASSIST
 
 * WHO ASSIST Working Group (2002). The Alcohol, Smoking and Substance Involvement Screening Test (ASSIST): development, reliability and feasibility. _Addiction_, 97 (9): 1183-1194.
 
@@ -2120,14 +2120,14 @@ label(assist_wide$Risk_Score_popi) <- "Prescription opioids (morphine, codeine, 
 label(assist_wide$Risk_Score_oth) <- "Other Drugs"
 ```
 
-## Risk Categories
+### Risk Categories
 ```{r}
 table1(~ . | Time, data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Time|Category"], overall = FALSE) |>
   t1flex()
 
 ```
 
-## Risk Scores
+### Risk Scores
 ```{r}
 table1(~ . | Time, data = assist_wide[,.SD, .SDcols = names(assist_wide) %like% "Time|Score"], overall = FALSE) |>
   t1flex()
@@ -2147,6 +2147,20 @@ assist_wide <- Reduce(function(x, y) merge(x, y, intersect(names(x), names(y)), 
 label(assist_wide$Mod_Hi_Risk) <- "Any Moderate or High Risk Substance Use"
 label(assist_wide$Mod_Hi_Risk_NoTOB) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco"
 label(assist_wide$Mod_Hi_Risk_NoTOBCANALC) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco, Alcohol, and Cannabis"
+```
+
+### Risk Scores Coeffient Alpha
+```{r, echo=TRUE}
+#| code-fold: true
+#| code-summary: "Show the code for WHO ASSIST Cronbach's Alpha"
+
+setDT(whoa)
+
+whoa[,.(Alpha = round(ltm::cronbach.alpha(.SD)$alpha,2)), 
+     .SDcols = names(whoa) %like% "num$", 
+     by = .(Substance,Time)] |>
+  dcast(Substance ~ Time, value.var = "Alpha") |>
+  flextable::flextable()
 ```
 
 ## PrEP
