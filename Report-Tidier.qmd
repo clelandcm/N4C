@@ -2149,7 +2149,7 @@ label(assist_wide$Mod_Hi_Risk_NoTOB) <- "Any Moderate or High Risk Substance Use
 label(assist_wide$Mod_Hi_Risk_NoTOBCANALC) <- "Any Moderate or High Risk Substance Use, Excluding Tobacco, Alcohol, and Cannabis"
 ```
 
-### Risk Scores Coeffient Alpha
+### Risk Scores Coefficient Alpha
 ```{r, echo=TRUE}
 #| code-fold: true
 #| code-summary: "Show the code for WHO ASSIST Cronbach's Alpha"
