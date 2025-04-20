@@ -433,6 +433,8 @@ follow <- na.omit(follow)
 
 # Follow-Up
 
+## Interview
+
 ```{r}
 FUrate <- dcast(follow, pid ~ Time, value.var = "Date")
 
@@ -452,19 +454,17 @@ FUrate <- merge(FUrate, f2int[pid %in% Not_Withdrawn,.(pid,f2complete = form_sta
 
 FUrate[, FU1_Completion := ifelse(!is.na(f1complete) & 
                                     f1complete == 2, "Yes",
-                                  ifelse(Days_Since_BL > 334, "Nine-Month Follow-Up Missed", NA))]
+                                  ifelse(Days_Since_BL > 334, "No", NA))]
 
 FUrate[, FU2_Completion := ifelse(!is.na(f2complete) & 
                                     f2complete == 2, "Yes",
-                                  ifelse(Days_Since_BL > 608, "Eighteen-Month Follow-Up Missed", NA))]
+                                  ifelse(Days_Since_BL > 608, "No", NA))]
 
 label(FUrate$FU1_Completion) <- "Nine-Month Interview Completed"
 label(FUrate$FU2_Completion) <- "Eighteen-Month Interview Completed"
 ```
 
-## Nine Months
-
-### Interview Completion
+### Nine Months
 
 ```{r}
 table1(~ FU1_Completion, data = FUrate[!is.na(FU1_Completion)])
@@ -475,9 +475,7 @@ table1(~ FU1_Completion, data = FUrate[!is.na(FU1_Completion)])
 -   n=`r nrow(FUrate[is.na(FU1_Completion) | FU1_Completion != "Yes" & Days_Since_BL <= 334])` pending nine-month follow-up interviews
 -   n=`r nrow(FUrate[(is.na(FU1_Completion) | FU1_Completion != "Yes") & Days_Since_BL > 334])` missed nine-month follow-up interviews
 
-## Eighteen Months
-
-### Interview Completion
+### Eighteen Months
 
 ```{r}
 table1(~ FU2_Completion, data = FUrate[!is.na(FU2_Completion)])
@@ -487,6 +485,32 @@ table1(~ FU2_Completion, data = FUrate[!is.na(FU2_Completion)])
 
 -   n=`r nrow(FUrate[is.na(FU2_Completion) | FU2_Completion != "Yes" & Days_Since_BL <= 608])` pending eighteen-month follow-up interviews
 -   n=`r nrow(FUrate[(is.na(FU2_Completion) | FU2_Completion != "Yes") & Days_Since_BL > 608])` missed eighteen-month follow-up interviews
+
+<br>
+
+```{r}
+gtsummary::tbl_cross(FUrate, row = FU1_Completion, col = FU2_Completion, 
+                     percent = "cell", margin = NULL) |>
+gtsummary::as_flex_table()
+```
+
+## Viral Load
+
+```{r}
+VL_follow <- subset(as_factor(blood_draw_form), !is.na(blood_vl_q2) & pid %in% Not_Withdrawn)
+
+setDT(VL_follow)
+
+VL_follow[, Time := car::recode(redcap_event, "'baseline_interview'='BL';
+                                               'follow_up_1_interv'='9M';
+                                               'follow_up_2_interv'='18M'", 
+                                as.factor = TRUE, levels = c("BL","9M","18M"))]
+
+table1(~ blood_vl_q2 | Time, 
+       data = VL_follow, 
+       overall = FALSE) |>
+  t1flex()
+```
 
 # Withdrawals
 ```{r}
