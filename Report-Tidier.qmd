@@ -2720,6 +2720,11 @@ label(assist_wide$Risk_Score_oth) <- "Other Drugs"
 ```
 
 ```{r}
+Spanish_Activities <- subset(locator_form, pid %in% Not_Withdrawn, select = c(pid,loc_language))
+setDT(Spanish_Activities)
+```
+
+```{r}
 save(list = c(setdiff(ls(), c("tkns","token","plist","figtop","figtop_VL","i",
                 "myalpha","mytab1","mytab2","mytab3","mytab4","mytab9",
                 "uri","rcon","baseline_consent_form","Cohort_DT","fu1_referral_form_staff",
