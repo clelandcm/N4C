@@ -1626,7 +1626,7 @@ trust <- merge(na.omit(follow), trust)
 trust_m <- melt(trust, id.vars = c("pid","Time","Date"),
                  variable.name = "Item", value.name = "Response")
 trust_m[, Item := as.numeric(gsub("trust","",Item))]
-trust_m[Item %in% c(2,3,4,6,7,9,10), Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
+trust_m[Item %in% c(2,3,4,6,8,9,10), Response_n := ifelse(Response %in% 1:5, Response - 1, as.integer(NA))]
 trust_m[Item %in% c(1,5,7,11), Response_n := ifelse(Response %in% 1:5, 4 - (Response - 1), as.integer(NA))]
 
 trust <- merge(trust,
