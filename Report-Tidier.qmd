@@ -497,6 +497,13 @@ gtsummary::as_flex_table()
 ## Viral Load
 
 ```{r}
+# Address mismatch between absolute viral load and undetectable/suppressed
+blood_draw_form$blood_vl_q2[blood_draw_form$blood_vl_q2 == 1 & 
+                            !is.na(blood_draw_form$blood_vl_q4) & 
+                            blood_draw_form$blood_vl_q4 > 200] <- 0
+```
+
+```{r}
 VL_follow <- subset(as_factor(blood_draw_form), !is.na(blood_vl_q2) & pid %in% Not_Withdrawn)
 
 setDT(VL_follow)
@@ -516,7 +523,6 @@ table1(~ blood_vl_q2 | Time,
 ```{r}
 table1(~ as_factor(withdrawal_form), data = study_withdrawal_form) |>
   t1flex()
-
 ```
 
 <br>
